@@ -2,6 +2,7 @@
   'aimeos/aimeos-laravel' => 
   array (
     'providers' => 
+    
     array (
       0 => 'Aimeos\\Shop\\ShopServiceProvider',
     ),
