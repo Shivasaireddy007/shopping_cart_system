@@ -8,7 +8,6 @@ Shopping Cart is a full-featured e-commerce package:
 * Perfect fit for AWS, Google, Azure and Kubernetes based clouds
 * Multi vendor, multi channel and multi warehouse
 * From one to 1,000,000,000+ items
-* Extremly fast down to 20ms
 * For multi-tentant e-commerce SaaS solutions with unlimited vendors
 * Bundles, vouchers, virtual, configurable, custom and event products
 * Subscriptions with recurring payments
@@ -22,28 +21,18 @@ Shopping Cart is a full-featured e-commerce package:
 * Beautiful admin dashboard
 * Configurable product data sets
 * Completly modular structure
-* Extremely configurable and extensible
-* Extension for market places with millions of vendors
-* Fully SEO optimized including rich snippets
-* Translated to 30+ languages
-* AI-based text translation
 * Optimized for smart phones and tablets
-* Secure and reviewed implementation
 * High quality source code
 
 ... and more features...
+
+![Image](https://github.com/user-attachments/assets/fe3dd9d4-528d-43d3-a8c2-3e00ebfd269a)
 
 ## Headless distribution
 
 To build a single page application (SPA) respectively a progressive web
 application (PWA), the headless distribution is the right choice
 with API-only and JWT authentication pre-configured:
-
-## Integrate into existing applications
-
-You already have an existing Laravel application and want to add a shop to your
-web site? Install the Aimeos composer package for Laravel and add e-commerce to
-your existing application in minutes:
 
 
 ## Requirements
@@ -64,7 +53,7 @@ On the CLI, execute this command for a complete installation including a working
 
 ```
 wget https://getcomposer.org/download/latest-stable/composer.phar -O composer
-php composer create-project aimeos/aimeos shopping_cart_system/shopping_cart_system_myshop
+php composer create-project shopping_cart_system/shopping_cart_system_myshop
 ```
 
 You will be asked for the parameters of your database and mail server as well as an
@@ -84,12 +73,16 @@ After the installation, you can test the Aimeos shop frontend by calling the URL
 VHost in your browser. If you use the integrated PHP web server, you should browse
 this URL: [http://127.0.0.1:8000](http://127.0.0.1:8000)
 
+![Image](https://github.com/user-attachments/assets/003d2661-3b21-4c8e-9d6a-0c60a4cd35d0)
+
+
 
 ## Backend
 
-The Aimeos administration interface will be available at `/admin` in your VHost. When using
+The shopping cart administration interface will be available at `/admin` in your VHost. When using
 the integrated PHP web server, call this URL: [http://127.0.0.1:8000/admin](http://127.0.0.1:8000/admin)
 
+![Image](https://github.com/user-attachments/assets/6b212ac1-ea64-4f29-b9a3-4c38dfc122c9)
 
 
 ## Multi-routing
@@ -101,9 +94,6 @@ your `./myshop/.env` file:
 ```
 SHOP_MULTIROUTE=true
 ```
-
-**Caution:** This will affect performance as it requires additional database queries for
-each request!
 
 ## Multi-vendor
 
@@ -123,5 +113,3 @@ SHOP_REGISTRATION=true
 By default, newly registered sellers have administrator privileges in the backend for
 their own site. For a more limited access to the backend, you can change the permission
 level to "editor" in the `./myshop/.env` file:
-
-```
