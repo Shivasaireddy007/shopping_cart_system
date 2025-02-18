@@ -27,6 +27,7 @@ return [
     'Register as merchant' => 'Registrieren als Händler',
     'Register' => 'Anlegen',
 
+    
     'Verify Your Email Address' => 'E-Mail Adresse bestätigen',
     'A fresh verification link has been sent to your email address.' => 'Ein neuer Bestätigungslink wurde an Ihre E-Mail Adresse versandt.',
     'Before proceeding, please check your email for a verification link.' => 'Bitte prüfen Sie Ihr E-Mail Postfach.',
