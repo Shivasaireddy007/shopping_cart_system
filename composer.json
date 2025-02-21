@@ -1,12 +1,12 @@
 {
-    "name": "aimeos/aimeos",
-    "description": "Aimeos ecommerce and shop system",
-    "keywords": ["aimeos", "ecommerce", "shop", "laravel", "distribution"],
+    "name": "Shopping Cart",
+    "description": "Shopping cart ecommerce and shop system",
+    "keywords": ["ecommerce", "shop", "laravel", "distribution"],
     "license": "MIT",
     "type": "project",
     "repositories": [{
         "type": "composer",
-        "url": "https://packages.aimeos.org/aimeoscom"
+        "url": "Link"
     }, {
         "type": "path",
         "url": "packages/*"
@@ -81,3 +81,4 @@
     "minimum-stability": "dev",
     "prefer-stable": true
 }
+
