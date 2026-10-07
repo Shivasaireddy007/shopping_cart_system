@@ -102,7 +102,7 @@ SHOP_MULTIROUTE=true
 
 ## Multi-vendor
 
-To enable multi-vendor features, add this settings to the `.env` file:
+To enable multi-vendor features, add this setting to the `.env` file:
 
 ```
 SHOP_MULTISHOP=true
