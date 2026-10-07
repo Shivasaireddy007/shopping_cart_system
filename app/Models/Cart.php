@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\Cart\ShippingFee;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -30,13 +31,7 @@ class Cart extends Model
 
     public function shippingFee(): int
     {
-        $subtotal = $this->subtotal();
-
-        if ($subtotal === 0 || $subtotal >= config('commerce.shipping.free_above')) {
-            return 0;
-        }
-
-        return config('commerce.shipping.flat_fee');
+        return ShippingFee::for($this->subtotal());
     }
 
     public function total(): int
