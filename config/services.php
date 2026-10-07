@@ -38,4 +38,12 @@ return [
         'base_url' => env('RAZORPAY_BASE_URL', 'https://api.razorpay.com/v1'),
     ],
 
+    'shiprocket' => [
+        'email' => env('SHIPROCKET_EMAIL'),
+        'password' => env('SHIPROCKET_PASSWORD'),
+        'pickup_location' => env('SHIPROCKET_PICKUP_LOCATION', 'Primary'),
+        'webhook_token' => env('SHIPROCKET_WEBHOOK_TOKEN'),
+        'base_url' => env('SHIPROCKET_BASE_URL', 'https://apiv2.shiprocket.in/v1/external'),
+    ],
+
 ];
