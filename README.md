@@ -11,7 +11,7 @@ Shopping Cart is a full-featured e-commerce package:
 * Perfect fit for AWS, Google, Azure and Kubernetes based clouds
 * Multi vendor, multi channel and multi warehouse
 * From one to 1,000,000,000+ items
-* For multi-tentant e-commerce SaaS solutions with unlimited vendors
+* For multi-tenant e-commerce SaaS solutions with unlimited vendors
 * Bundles, vouchers, virtual, configurable, custom and event products
 * Subscriptions with recurring payments
 * 100+ payment gateways
@@ -23,7 +23,7 @@ Shopping Cart is a full-featured e-commerce package:
 * Full-featured admin backend
 * Beautiful admin dashboard
 * Configurable product data sets
-* Completly modular structure
+* Completely modular structure
 * Optimized for smart phones and tablets
 * High quality source code
 
