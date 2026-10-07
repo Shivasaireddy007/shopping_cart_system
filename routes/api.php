@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\CategoryController;
+use App\Http\Controllers\Api\V1\ProductController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -24,4 +26,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
             Route::post('logout', [AuthController::class, 'logout'])->name('logout');
         });
     });
+
+    Route::get('categories', [CategoryController::class, 'index'])->name('categories.index');
+    Route::get('products', [ProductController::class, 'index'])->name('products.index');
+    Route::get('products/{slug}', [ProductController::class, 'show'])->name('products.show');
 });
