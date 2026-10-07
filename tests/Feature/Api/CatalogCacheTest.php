@@ -5,7 +5,7 @@ namespace Tests\Feature\Api;
 use App\Models\Product;
 use App\Services\Catalog\CatalogCache;
 use App\Services\Catalog\HotProducts;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\RefreshesDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
@@ -13,7 +13,7 @@ use Tests\TestCase;
 
 class CatalogCacheTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshesDatabase;
 
     protected function setUp(): void
     {

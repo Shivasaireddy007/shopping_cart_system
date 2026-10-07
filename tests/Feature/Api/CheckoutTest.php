@@ -7,13 +7,13 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
 use App\Services\Cart\CartService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\RefreshesDatabase;
 use Tests\Concerns\PlacesOrders;
 use Tests\TestCase;
 
 class CheckoutTest extends TestCase
 {
-    use PlacesOrders, RefreshDatabase;
+    use PlacesOrders, RefreshesDatabase;
 
     private User $user;
 

@@ -4,12 +4,12 @@ namespace Tests\Feature\Api;
 
 use App\Models\Product;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\RefreshesDatabase;
 use Tests\TestCase;
 
 class CartTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshesDatabase;
 
     private User $user;
 

@@ -5,13 +5,13 @@ namespace Tests\Feature\Api;
 use App\Enums\OrderStatus;
 use App\Models\Product;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\RefreshesDatabase;
 use Tests\Concerns\PlacesOrders;
 use Tests\TestCase;
 
 class OrderCancellationTest extends TestCase
 {
-    use PlacesOrders, RefreshDatabase;
+    use PlacesOrders, RefreshesDatabase;
 
     protected function setUp(): void
     {

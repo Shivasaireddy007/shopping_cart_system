@@ -7,14 +7,14 @@ use App\Events\OrderPaid;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\RefreshesDatabase;
 use Illuminate\Support\Facades\Event;
 use Tests\Concerns\PlacesOrders;
 use Tests\TestCase;
 
 class PaymentTest extends TestCase
 {
-    use PlacesOrders, RefreshDatabase;
+    use PlacesOrders, RefreshesDatabase;
 
     private User $user;
 

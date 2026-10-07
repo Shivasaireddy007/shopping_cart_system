@@ -3,12 +3,12 @@
 namespace Tests\Feature\Api;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\RefreshesDatabase;
 use Tests\TestCase;
 
 class AuthTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshesDatabase;
 
     public function test_user_can_register_and_receives_a_token(): void
     {

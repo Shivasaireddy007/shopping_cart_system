@@ -4,7 +4,7 @@ namespace Tests\Feature\Api;
 
 use App\Jobs\SyncProductToSearch;
 use App\Models\Product;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\RefreshesDatabase;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Http;
@@ -12,7 +12,7 @@ use Tests\TestCase;
 
 class SearchTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshesDatabase;
 
     protected function setUp(): void
     {

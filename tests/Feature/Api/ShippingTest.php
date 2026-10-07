@@ -10,7 +10,7 @@ use App\Models\Product;
 use App\Models\User;
 use App\Services\Shipping\ShiprocketClient;
 use Illuminate\Http\Client\RequestException;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\RefreshesDatabase;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Http;
 use Tests\Concerns\PlacesOrders;
@@ -18,7 +18,7 @@ use Tests\TestCase;
 
 class ShippingTest extends TestCase
 {
-    use PlacesOrders, RefreshDatabase;
+    use PlacesOrders, RefreshesDatabase;
 
     private User $user;
 

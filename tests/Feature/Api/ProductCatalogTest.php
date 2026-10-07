@@ -4,12 +4,12 @@ namespace Tests\Feature\Api;
 
 use App\Models\Category;
 use App\Models\Product;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\RefreshesDatabase;
 use Tests\TestCase;
 
 class ProductCatalogTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshesDatabase;
 
     public function test_lists_only_active_products(): void
     {
