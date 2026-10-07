@@ -1,3 +1,6 @@
+# Shopping Cart System
+
+A Laravel 11 e-commerce shop built on the Aimeos framework.
 
 ## Features
 
