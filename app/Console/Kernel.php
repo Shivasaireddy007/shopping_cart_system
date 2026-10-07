@@ -16,6 +16,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         $schedule->command('orders:expire-unpaid')->everyFiveMinutes()->withoutOverlapping();
+        $schedule->command('catalog:warm-hot')->everyFiveMinutes()->withoutOverlapping();
     }
 
     /**
