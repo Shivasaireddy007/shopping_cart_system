@@ -48,6 +48,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Enable multi-routing
+    |--------------------------------------------------------------------------
+    |
+    | Serves category, product and CMS pages from top level URLs like
+    | /shoes or /about-us instead of prefixed shop routes.
+    |
+    */
+
+    'shop_multiroute' => env('SHOP_MULTIROUTE', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Enable merchant registration
     |--------------------------------------------------------------------------
     |
