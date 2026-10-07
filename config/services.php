@@ -46,4 +46,10 @@ return [
         'base_url' => env('SHIPROCKET_BASE_URL', 'https://apiv2.shiprocket.in/v1/external'),
     ],
 
+    'elasticsearch' => [
+        'enabled' => (bool) env('ELASTICSEARCH_ENABLED', true),
+        'host' => env('ELASTICSEARCH_HOST', 'http://127.0.0.1:9200'),
+        'index' => env('ELASTICSEARCH_INDEX', 'products'),
+    ],
+
 ];
