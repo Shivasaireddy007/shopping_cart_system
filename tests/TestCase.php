@@ -33,7 +33,7 @@ abstract class TestCase extends BaseTestCase
      */
     public function call($method, $uri, $parameters = [], $cookies = [], $files = [], $server = [], $content = null)
     {
-        $this->app['auth']->forgetGuards();
+        $this->app['auth']->guard('api')->forgetUser();
         $this->app->make(JWT::class)->unsetToken();
 
         return parent::call($method, $uri, $parameters, $cookies, $files, $server, $content);
