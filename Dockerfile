@@ -7,8 +7,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libjpeg-dev \
     libfreetype6-dev \
     libicu-dev \
+    libzip-dev \
+    unzip \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd intl pdo pdo_mysql mysqli \
+    && docker-php-ext-install gd intl pdo pdo_mysql mysqli zip \
     && rm -rf /var/lib/apt/lists/*
 
 # Enable Apache mod_rewrite for Laravel
@@ -22,8 +24,14 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-av
 # Set working directory
 WORKDIR /var/www/html
 
+# Install Composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
 # Copy Laravel project files to container
 COPY . /var/www/html/
+
+# Install PHP dependencies (vendor/ is excluded by .dockerignore)
+RUN composer install --no-dev --no-interaction --no-scripts --prefer-dist --optimize-autoloader
 
 # Set proper permissions
 RUN chown -R www-data:www-data /var/www/html \
