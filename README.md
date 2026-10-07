@@ -31,13 +31,6 @@ Shopping Cart is a full-featured e-commerce package:
 
 ![Image](https://github.com/user-attachments/assets/fe3dd9d4-528d-43d3-a8c2-3e00ebfd269a)
 
-## Headless distribution
-
-To build a single page application (SPA) respectively a progressive web
-application (PWA), the headless distribution is the right choice
-with API-only and JWT authentication pre-configured:
-
-
 ## Requirements
 
 The shop distribution requires:
