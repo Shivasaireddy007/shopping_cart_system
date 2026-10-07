@@ -1,6 +1,6 @@
 <?php
 
-use Illuminate\Http\Request;
+use App\Http\Controllers\Api\V1\AuthController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -8,12 +8,20 @@ use Illuminate\Support\Facades\Route;
 | API Routes
 |--------------------------------------------------------------------------
 |
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| is assigned the "api" middleware group. Enjoy building your API!
+| Versioned REST API for the shop. Routes are prefixed with /api and use
+| the "api" middleware group. Protected routes authenticate with JWT.
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+Route::prefix('v1')->name('api.v1.')->group(function () {
+    Route::prefix('auth')->name('auth.')->group(function () {
+        Route::post('register', [AuthController::class, 'register'])->middleware('throttle:10,1')->name('register');
+        Route::post('login', [AuthController::class, 'login'])->middleware('throttle:10,1')->name('login');
+
+        Route::middleware('auth:api')->group(function () {
+            Route::get('me', [AuthController::class, 'me'])->name('me');
+            Route::post('refresh', [AuthController::class, 'refresh'])->name('refresh');
+            Route::post('logout', [AuthController::class, 'logout'])->name('logout');
+        });
+    });
 });
