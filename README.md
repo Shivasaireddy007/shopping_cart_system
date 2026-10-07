@@ -118,3 +118,7 @@ SHOP_REGISTRATION=true
 By default, newly registered sellers have administrator privileges in the backend for
 their own site. For a more limited access to the backend, you can change the permission
 level to "editor" in the `.env` file:
+
+```
+SHOP_PERMISSION=editor
+```
