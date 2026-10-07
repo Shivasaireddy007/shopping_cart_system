@@ -43,7 +43,7 @@ class AuthTest extends TestCase
     public function test_me_returns_the_authenticated_user(): void
     {
         $user = User::factory()->create();
-        $token = auth('api')->login($user);
+        $token = $this->jwtFor($user);
 
         $this->withToken($token)->getJson('/api/v1/auth/me')
             ->assertOk()
@@ -58,10 +58,9 @@ class AuthTest extends TestCase
     public function test_logged_out_token_is_rejected(): void
     {
         $user = User::factory()->create();
-        $token = auth('api')->login($user);
+        $token = $this->jwtFor($user);
 
         $this->withToken($token)->postJson('/api/v1/auth/logout')->assertOk();
-        auth('api')->forgetUser();
 
         $this->withToken($token)->getJson('/api/v1/auth/me')->assertUnauthorized();
     }
@@ -69,7 +68,7 @@ class AuthTest extends TestCase
     public function test_token_can_be_refreshed(): void
     {
         $user = User::factory()->create();
-        $token = auth('api')->login($user);
+        $token = $this->jwtFor($user);
 
         $response = $this->withToken($token)->postJson('/api/v1/auth/refresh')->assertOk();
 
