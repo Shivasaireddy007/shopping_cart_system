@@ -25,6 +25,10 @@ services:
                 condition: service_healthy
             minio:
                 condition: service_healthy
+            redis:
+                condition: service_healthy
+            elasticsearch:
+                condition: service_healthy
     mysql:
         image: 'mysql/mysql-server:8.0'
         ports:
@@ -70,6 +74,39 @@ services:
                 - 'http://localhost:9000/minio/health/live'
             retries: 3
             timeout: 5s
+    redis:
+        image: 'redis:7-alpine'
+        ports:
+            - '${FORWARD_REDIS_PORT:-6379}:6379'
+        volumes:
+            - 'sail-redis:/data'
+        networks:
+            - sail
+        healthcheck:
+            test:
+                - CMD
+                - redis-cli
+                - ping
+            retries: 3
+            timeout: 5s
+    elasticsearch:
+        image: 'docker.elastic.co/elasticsearch/elasticsearch:8.19.4'
+        environment:
+            discovery.type: single-node
+            xpack.security.enabled: 'false'
+            ES_JAVA_OPTS: '-Xms512m -Xmx512m'
+        ports:
+            - '${FORWARD_ELASTICSEARCH_PORT:-9200}:9200'
+        volumes:
+            - 'sail-elasticsearch:/usr/share/elasticsearch/data'
+        networks:
+            - sail
+        healthcheck:
+            test:
+                - CMD-SHELL
+                - 'curl -fs http://localhost:9200/_cluster/health || exit 1'
+            retries: 10
+            timeout: 5s
     mailpit:
         image: 'axllent/mailpit:latest'
         ports:
@@ -84,5 +121,9 @@ volumes:
     sail-mysql:
         driver: local
     sail-minio:
+        driver: local
+    sail-redis:
+        driver: local
+    sail-elasticsearch:
         driver: local
 
