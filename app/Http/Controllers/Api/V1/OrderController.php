@@ -8,9 +8,11 @@ use App\Models\Order;
 use App\Services\Orders\OrderCanceller;
 use App\Services\Payments\PaymentRecorder;
 use App\Services\Payments\RazorpayClient;
+use App\Services\Shipping\ShiprocketClient;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Cache;
 
 class OrderController extends Controller
 {
@@ -46,6 +48,27 @@ class OrderController extends Controller
         $order = $payments->captured($order->razorpay_order_id, $data['razorpay_payment_id'], $order->total);
 
         return new OrderResource($order->load('items'));
+    }
+
+    public function tracking(Request $request, Order $order, ShiprocketClient $shiprocket): JsonResponse
+    {
+        $this->authorizeOrder($request, $order);
+
+        $shipment = $order->shipment;
+
+        if ($shipment === null || ! $shipment->hasAwb()) {
+            return response()->json(['data' => ['status' => $order->status->value, 'awb_code' => null, 'events' => []]]);
+        }
+
+        $tracking = Cache::remember("tracking:{$shipment->awb_code}", now()->addMinutes(10), fn () => $shiprocket->track($shipment->awb_code));
+
+        return response()->json(['data' => [
+            'status' => $order->status->value,
+            'awb_code' => $shipment->awb_code,
+            'courier_name' => $shipment->courier_name,
+            'events' => $tracking['shipment_track_activities'] ?? [],
+            'track_url' => $tracking['track_url'] ?? null,
+        ]]);
     }
 
     public function cancel(Request $request, Order $order, OrderCanceller $canceller): OrderResource|JsonResponse

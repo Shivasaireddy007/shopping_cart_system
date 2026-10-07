@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Webhooks\RazorpayWebhookController;
+use App\Http\Controllers\Webhooks\ShiprocketWebhookController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -47,9 +48,14 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::get('orders/{order}', [OrderController::class, 'show'])->name('orders.show');
         Route::post('orders/{order}/verify-payment', [OrderController::class, 'verifyPayment'])->name('orders.verify-payment');
         Route::post('orders/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
+        Route::get('orders/{order}/tracking', [OrderController::class, 'tracking'])->name('orders.tracking');
     });
 });
 
 Route::post('webhooks/razorpay', RazorpayWebhookController::class)
     ->withoutMiddleware('throttle:api')
     ->name('webhooks.razorpay');
+
+Route::post('webhooks/shiprocket', ShiprocketWebhookController::class)
+    ->withoutMiddleware('throttle:api')
+    ->name('webhooks.shiprocket');
