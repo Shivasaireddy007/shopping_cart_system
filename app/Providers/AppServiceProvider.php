@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Services\Payments\RazorpayClient;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Config;
@@ -20,7 +21,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        $this->app->singleton(RazorpayClient::class, fn () => RazorpayClient::fromConfig());
     }
 
     /**
