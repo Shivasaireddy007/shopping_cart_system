@@ -50,6 +50,6 @@ if( config( 'app.shop_multiroute' ) )
         Route::match( ['GET', 'POST'], '/{path?}', array(
             'as' => 'aimeos_resolve',
             'uses' => 'Aimeos\Shop\Controller\ResolveController@indexAction'
-        ) )->where( ['locale' => '[a-z]{2}(\_[A-Z]{2})?', 'site' => '[A-Za-z0-9\.\-]+'], 'path', '.*' );
+        ) )->where( ['locale' => '[a-z]{2}(\_[A-Z]{2})?', 'site' => '[A-Za-z0-9\.\-]+', 'path' => '.*'] );
     });
 }
