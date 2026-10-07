@@ -6,8 +6,9 @@ RUN apt-get update && apt-get install -y \
     libpng-dev \
     libjpeg-dev \
     libfreetype6-dev \
+    libicu-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd pdo pdo_mysql mysqli
+    && docker-php-ext-install gd intl pdo pdo_mysql mysqli
 
 # Enable Apache mod_rewrite for Laravel
 RUN a2enmod rewrite
