@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\CheckoutController;
 use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\ProductController;
+use App\Http\Controllers\Api\V1\SearchController;
 use App\Http\Controllers\Webhooks\RazorpayWebhookController;
 use App\Http\Controllers\Webhooks\ShiprocketWebhookController;
 use Illuminate\Support\Facades\Route;
@@ -35,6 +36,7 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     Route::get('categories', [CategoryController::class, 'index'])->name('categories.index');
     Route::get('products', [ProductController::class, 'index'])->name('products.index');
     Route::get('products/{slug}', [ProductController::class, 'show'])->name('products.show');
+    Route::get('search', SearchController::class)->name('search');
 
     Route::middleware('auth:api')->group(function () {
         Route::get('cart', [CartController::class, 'show'])->name('cart.show');
