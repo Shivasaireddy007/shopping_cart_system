@@ -17,6 +17,9 @@ return [
         'free_above' => (int) env('SHIPPING_FREE_ABOVE', 99900),
     ],
 
+    // Requests per minute per user (or IP for guests) on the API.
+    'api_rate_limit' => (int) env('API_RATE_LIMIT', 60),
+
     'cart' => [
         'max_quantity_per_item' => 10,
     ],
