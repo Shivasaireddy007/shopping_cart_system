@@ -21,8 +21,10 @@ services:
         networks:
             - sail
         depends_on:
-            - mysql
-            - minio
+            mysql:
+                condition: service_healthy
+            minio:
+                condition: service_healthy
     mysql:
         image: 'mysql/mysql-server:8.0'
         ports:
