@@ -2,13 +2,12 @@
 
 namespace Tests\Feature\Auth;
 
-use App\Providers\RouteServiceProvider;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\RefreshesDatabase;
 use Tests\TestCase;
 
 class RegistrationTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshesDatabase;
 
     public function test_registration_screen_can_be_rendered(): void
     {
@@ -27,6 +26,6 @@ class RegistrationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(RouteServiceProvider::HOME);
+        $response->assertRedirect(airoute('aimeos_home'));
     }
 }

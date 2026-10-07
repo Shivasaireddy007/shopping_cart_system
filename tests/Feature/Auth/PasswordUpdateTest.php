@@ -3,13 +3,13 @@
 namespace Tests\Feature\Auth;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\RefreshesDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class PasswordUpdateTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshesDatabase;
 
     public function test_password_can_be_updated(): void
     {
@@ -18,7 +18,7 @@ class PasswordUpdateTest extends TestCase
         $response = $this
             ->actingAs($user)
             ->from('/profile')
-            ->put('/password', [
+            ->post('/password', [
                 'current_password' => 'password',
                 'password' => 'new-password',
                 'password_confirmation' => 'new-password',
@@ -38,7 +38,7 @@ class PasswordUpdateTest extends TestCase
         $response = $this
             ->actingAs($user)
             ->from('/profile')
-            ->put('/password', [
+            ->post('/password', [
                 'current_password' => 'wrong-password',
                 'password' => 'new-password',
                 'password_confirmation' => 'new-password',
