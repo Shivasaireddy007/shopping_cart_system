@@ -76,6 +76,16 @@ class SearchTest extends TestCase
         Bus::assertDispatched(SyncProductToSearch::class, fn ($job) => $job->productId === $product->id);
     }
 
+    public function test_stock_decrement_queues_a_search_sync(): void
+    {
+        $product = Product::factory()->create(['stock' => 5]);
+        Bus::fake([SyncProductToSearch::class]);
+
+        $product->decrement('stock', 2);
+
+        Bus::assertDispatched(SyncProductToSearch::class, fn ($job) => $job->productId === $product->id);
+    }
+
     public function test_sync_job_indexes_active_and_removes_inactive_products(): void
     {
         Http::fake(['es.test:9200/*' => Http::response(['result' => 'ok'])]);
