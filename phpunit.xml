@@ -24,6 +24,8 @@
         <env name="DB_DATABASE" value="testing"/>
         <env name="ELASTICSEARCH_ENABLED" value="false"/>
         <env name="REDIS_CACHE_DB" value="15"/>
+        <env name="CATALOG_CACHE_ENABLED" value="true"/>
+        <env name="API_RATE_LIMIT" value="60"/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
