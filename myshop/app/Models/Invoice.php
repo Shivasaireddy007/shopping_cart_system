@@ -12,6 +12,11 @@ class Invoice extends Model
 
     protected $fillable = ['invoiceno', 'amount', 'customer_id', 'status'];
 
+    protected $casts = [
+        'amount' => 'decimal:2',
+        'customer_id' => 'integer',
+    ];
+
     /**
      * Generate an invoice number (e.g. INV-6543A1) when none is given.
      */
