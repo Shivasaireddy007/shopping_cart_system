@@ -4,23 +4,21 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Str; // Import Str helper
+use Illuminate\Support\Str;
 
 class Invoice extends Model
 {
     use HasFactory;
 
-    protected $table = 'invoices'; // Ensure it matches your database table
+    protected $fillable = ['invoiceno', 'amount', 'customer_id', 'status'];
 
-    protected $fillable = ['invoiceno', 'amount', 'customer_id', 'status']; // Add actual column names
-
-    // Automatically generate 'invoiceno' if not provided
-    protected static function boot()
+    /**
+     * Generate an invoice number (e.g. INV-6543A1) when none is given.
+     */
+    protected static function booted(): void
     {
-        parent::boot();
-        static::creating(function ($invoice) {
+        static::creating(function (Invoice $invoice) {
             if (empty($invoice->invoiceno)) {
-                // Generate unique invoice number (e.g., INV-6543A12)
                 $invoice->invoiceno = 'INV-' . Str::upper(Str::random(6));
             }
         });
