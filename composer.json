@@ -5,9 +5,6 @@
     "license": "MIT",
     "type": "project",
     "repositories": [{
-        "type": "composer",
-        "url": "Link"
-    }, {
         "type": "path",
         "url": "packages/*"
     }],
