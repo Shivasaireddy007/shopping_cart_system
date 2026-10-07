@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Services\Payments\RazorpayClient;
+use App\Services\Search\ElasticsearchClient;
 use App\Services\Shipping\ShiprocketClient;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\ServiceProvider;
@@ -24,6 +25,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(RazorpayClient::class, fn () => RazorpayClient::fromConfig());
         $this->app->singleton(ShiprocketClient::class, fn () => ShiprocketClient::fromConfig());
+        $this->app->singleton(ElasticsearchClient::class, fn () => ElasticsearchClient::fromConfig());
     }
 
     /**
