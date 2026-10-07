@@ -40,7 +40,7 @@ if( $conf['prefix'] )
     });
 }
 
-Route::group($conf ?? [], function() {
+Route::group($conf, function() {
     require __DIR__.'/auth.php';
 });
 
