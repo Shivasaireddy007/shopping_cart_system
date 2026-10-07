@@ -33,7 +33,8 @@ class ProductQuery
             ->when(isset($filters['max_price']), fn ($q) => $q->where('price', '<=', $filters['max_price']))
             ->when($filters['in_stock'] ?? false, fn ($q) => $q->where('stock', '>', 0))
             ->orderBy($column, $direction)
-            ->orderBy('id', 'desc')
+            // Tiebreak in the same direction so the composite indexes can serve the sort.
+            ->when($column !== 'id', fn ($q) => $q->orderBy('id', $direction))
             ->paginate($filters['per_page'] ?? 24, ['*'], 'page', $filters['page'] ?? 1);
     }
 }
