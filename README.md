@@ -94,7 +94,7 @@ the integrated PHP web server, call this URL: [http://127.0.0.1:8000/admin](http
 
 If you want to have all category, product and page URLs as top level URLs like `/shoes`,
 `/my-sneaker` and `/about-us`, then you can enable the Aimeos multi-routing feature in
-your `./myshop/.env` file:
+your `.env` file:
 
 ```
 SHOP_MULTIROUTE=true
@@ -102,14 +102,14 @@ SHOP_MULTIROUTE=true
 
 ## Multi-vendor
 
-To enable multi-vendor features, add this settings to the `./myshop/.env` file:
+To enable multi-vendor features, add this settings to the `.env` file:
 
 ```
 SHOP_MULTISHOP=true
 ```
 
 If you want to allow vendors to register themselves as sellers, set this option in the
-`./myshop/.env` file too:
+`.env` file too:
 
 ```
 SHOP_REGISTRATION=true
@@ -117,4 +117,4 @@ SHOP_REGISTRATION=true
 
 By default, newly registered sellers have administrator privileges in the backend for
 their own site. For a more limited access to the backend, you can change the permission
-level to "editor" in the `./myshop/.env` file:
+level to "editor" in the `.env` file:
