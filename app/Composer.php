@@ -96,7 +96,7 @@ Made with <fg=green>love</> by the Aimeos community. Be a part of it!
 			$content = preg_replace( "/^APP_KEY\=.*$/m", 'APP_KEY="' . trim( $matches[1], '"' ) . '"', $content );
 		}
 
-		if( ( $config = parse_ini_string( $content ) ) === false ) {
+		if( ( $config = parse_ini_string( $content, false, INI_SCANNER_RAW ) ) === false ) {
 			throw new \RuntimeException( sprintf( 'Can not parse file "%1$s"', $filename ) );
 		}
 
@@ -161,8 +161,15 @@ Made with <fg=green>love</> by the Aimeos community. Be a part of it!
 	{
 		$content = '';
 
-		foreach( $config as $key => $value ) {
-			$content .= $key . '=' . ( is_bool( $value ) ? (int) $value : $value ) . "\n";
+		foreach( $config as $key => $value )
+		{
+			$value = (string) $value;
+
+			if( preg_match( '/[\s#"$]/', $value ) ) {
+				$value = '"' . addcslashes( $value, '"' ) . '"';
+			}
+
+			$content .= $key . '=' . $value . "\n";
 		}
 
 		return $content . "\n";
