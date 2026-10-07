@@ -1,51 +1,45 @@
 # Shopping Cart System
 
-A Laravel 11 e-commerce shop built on the Aimeos framework.
+A personal learning project: an e-commerce web app built with Laravel 11 and PHP 8.2.
+It has a customer storefront, an admin panel, user accounts and a small invoicing module.
+I built it to learn how a real online store fits together, from routing and authentication
+to the database and deployment with Docker.
 
-## Features
+## What I worked on
 
-Shopping Cart is a full-featured e-commerce package:
+- **Store setup on Laravel 11**: set up a Laravel app with an open-source e-commerce
+  package that provides the catalog, basket and checkout, and configured it for this project.
+- **Invoicing module** (`myshop/`): an `Invoice` model with auto-generated invoice numbers,
+  plus migrations for amount, customer and status.
+- **Authentication**: registration, login, email verification and password reset.
+- **Configurable routing**: optional multi-language, multi-vendor and top-level URL
+  routing, switched on and off through `.env` settings.
+- **Docker setup**: a Dockerfile (PHP 8.2 + Apache) and a Docker Compose stack with
+  MySQL, MinIO for file storage and Mailpit for testing emails.
+- **Cleanup and fixes**: moved settings to Laravel's `config()` so they work with
+  config caching, fixed route constraints and updated the dependencies for Laravel 11.
 
-* JSON REST API based on jsonapi.org
-* GraphQL API for administration
-* Perfect fit for AWS, Google, Azure and Kubernetes based clouds
-* Multi vendor, multi channel and multi warehouse
-* From one to 1,000,000,000+ items
-* For multi-tenant e-commerce SaaS solutions with unlimited vendors
-* Bundles, vouchers, virtual, configurable, custom and event products
-* Subscriptions with recurring payments
-* 100+ payment gateways
-* Full RTL support (frontend and backend)
-* Block/tier pricing out of the box
-* Extension for customer/group based prices
-* Discount and voucher support
-* Flexible basket rule system
-* Full-featured admin backend
-* Beautiful admin dashboard
-* Configurable product data sets
-* Completely modular structure
-* Optimized for smart phones and tablets
-* High quality source code
+## Tech stack
 
-... and more features...
+| Area | Tools |
+|---|---|
+| Backend | PHP 8.2, Laravel 11 |
+| Frontend | Blade, Tailwind CSS, Alpine.js, Vite |
+| Database | MySQL |
+| DevOps | Docker, Docker Compose |
+| Testing | PHPUnit |
 
-![Image](https://github.com/user-attachments/assets/fe3dd9d4-528d-43d3-a8c2-3e00ebfd269a)
+## Project structure
 
-## Requirements
+| Folder | What it is |
+|---|---|
+| `/` (root) | The main shop application |
+| `myshop/` | A separate Laravel 11 app where I built the invoicing module |
+| `shopping_cart/` | A fresh Laravel 11 starter I used for experiments |
 
-The shop distribution requires:
-- Linux/Unix, WAMP/XAMP or MacOS environment
-- PHP >= 8.2
-- MySQL >= 5.7.8, MariaDB >= 10.2.2, PostgreSQL 9.6+, SQL Server 2019+
-- Web server (Apache, Nginx or integrated PHP web server for testing)
+## Running it locally
 
-If required PHP extensions are missing, `composer` will tell you about the missing
-dependencies.
-
-## Installation
-
-You need [composer 2.2+](https://getcomposer.org) and Node.js. Clone the repository
-and install the dependencies:
+You need PHP 8.2+, [Composer](https://getcomposer.org) 2.2+, Node.js and MySQL.
 
 ```
 git clone https://github.com/Shivasaireddy007/shopping_cart_system.git
@@ -54,71 +48,56 @@ composer install
 npm install && npm run build
 ```
 
-Create your `.env` file, set your database and mail settings in it, then set up the shop
-and create an administration account:
+Create the `.env` file and add your database settings:
 
 ```
 cp .env.example .env
 php artisan key:generate
 php artisan migrate
+```
+
+Load the demo shop data and create an admin account:
+
+```
 php artisan aimeos:setup --option=setup/default/demo:1
 php artisan aimeos:account --super --admin you@example.com
 ```
 
-In a local environment, you can use the integrated PHP web server to test your
-installation:
+Start the development server:
 
 ```
 php artisan serve
 ```
 
-## Frontend
+- Storefront: [http://127.0.0.1:8000](http://127.0.0.1:8000)
+- Admin panel: [http://127.0.0.1:8000/admin](http://127.0.0.1:8000/admin)
 
-After the installation, you can test the Aimeos shop frontend by calling the URL of your
-VHost in your browser. If you use the integrated PHP web server, you should browse
-this URL: [http://127.0.0.1:8000](http://127.0.0.1:8000)
+## Running with Docker
 
-![Image](https://github.com/user-attachments/assets/003d2661-3b21-4c8e-9d6a-0c60a4cd35d0)
-
-
-
-## Backend
-
-The shopping cart administration interface will be available at `/admin` in your VHost. When using
-the integrated PHP web server, call this URL: [http://127.0.0.1:8000/admin](http://127.0.0.1:8000/admin)
-
-![Image](https://github.com/user-attachments/assets/6b212ac1-ea64-4f29-b9a3-4c38dfc122c9)
-
-
-## Multi-routing
-
-If you want to have all category, product and page URLs as top level URLs like `/shoes`,
-`/my-sneaker` and `/about-us`, then you can enable the Aimeos multi-routing feature in
-your `.env` file:
+After `composer install`, start the full stack (app, MySQL, MinIO and Mailpit) with
+Laravel Sail:
 
 ```
-SHOP_MULTIROUTE=true
+./vendor/bin/sail up -d
 ```
 
-## Multi-vendor
+Emails sent by the app can be viewed in Mailpit at [http://localhost:8025](http://localhost:8025).
 
-To enable multi-vendor features, add this setting to the `.env` file:
+## Optional settings
 
-```
-SHOP_MULTISHOP=true
-```
+These `.env` options turn on extra routing features:
 
-If you want to allow vendors to register themselves as sellers, set this option in the
-`.env` file too:
+| Setting | Effect |
+|---|---|
+| `SHOP_MULTILOCALE=true` | Adds the language to URLs, e.g. `/en/shop` |
+| `SHOP_MULTISHOP=true` | Lets one installation host several vendor shops |
+| `SHOP_MULTIROUTE=true` | Serves product and category pages from top-level URLs like `/shoes` |
+| `SHOP_REGISTRATION=true` | Lets vendors sign up for their own shop |
+| `SHOP_PERMISSION=editor` | Gives new vendors editor rights instead of admin |
 
-```
-SHOP_REGISTRATION=true
-```
+## What I learned
 
-By default, newly registered sellers have administrator privileges in the backend for
-their own site. For a more limited access to the backend, you can change the permission
-level to "editor" in the `.env` file:
-
-```
-SHOP_PERMISSION=editor
-```
+- How the parts of a Laravel app fit together: routing, middleware, Eloquent models and migrations
+- Why settings should be read through `config()` rather than `env()` once config is cached
+- Writing database migrations that change existing tables safely
+- Containerising a PHP app with Docker and Docker Compose
