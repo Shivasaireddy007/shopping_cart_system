@@ -44,22 +44,31 @@ dependencies.
 
 ## Installation
 
-To install the Aimeos shop application, you need [composer 2.2+](https://getcomposer.org).
-On the CLI, execute this command for a complete installation including a working setup:
+You need [composer 2.2+](https://getcomposer.org) and Node.js. Clone the repository
+and install the dependencies:
 
 ```
-wget https://getcomposer.org/download/latest-stable/composer.phar -O composer
-php composer create-project shopping_cart_system/shopping_cart_system_myshop
+git clone https://github.com/Shivasaireddy007/shopping_cart_system.git
+cd shopping_cart_system
+composer install
+npm install && npm run build
 ```
 
-You will be asked for the parameters of your database and mail server as well as an
-e-mail and password used for creating the administration account.
-
-In a local environment, you can use the integrated PHP web server to test your new Aimeos
-installation. Simply execute the following command to start the web server:
+Create your `.env` file, set your database and mail settings in it, then set up the shop
+and create an administration account:
 
 ```
-cd myshop
+cp .env.example .env
+php artisan key:generate
+php artisan migrate
+php artisan aimeos:setup --option=setup/default/demo:1
+php artisan aimeos:account --super --admin you@example.com
+```
+
+In a local environment, you can use the integrated PHP web server to test your
+installation:
+
+```
 php artisan serve
 ```
 
