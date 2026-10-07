@@ -4,11 +4,20 @@ namespace Tests;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Illuminate\Support\Facades\Http;
 use PHPOpenSourceSaver\JWTAuth\JWT;
 
 abstract class TestCase extends BaseTestCase
 {
     use CreatesApplication;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Tests must never reach Razorpay, Shiprocket or Elasticsearch for real.
+        Http::preventStrayRequests();
+    }
 
     /**
      * Issues a JWT for the user without logging them in on the guard.
