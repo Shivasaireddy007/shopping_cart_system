@@ -25,7 +25,7 @@ return [
     |
     | Activates support for multiple locales (languages).
     | You have to add translations for some frontend strings in
-    | ./resources/lang/<locale>/
+    | ./lang/<locale>/
     |
     */
 
