@@ -56,11 +56,11 @@ php artisan key:generate
 php artisan migrate
 ```
 
-Load the demo shop data and create an admin account:
+Then run the shop package's setup command to create its tables and demo data, and its
+account command to create an admin user. Both are listed under the package's section in:
 
 ```
-php artisan aimeos:setup --option=setup/default/demo:1
-php artisan aimeos:account --super --admin you@example.com
+php artisan list
 ```
 
 Start the development server:
