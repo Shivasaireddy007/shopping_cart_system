@@ -2,7 +2,7 @@
 
 [![tests](https://github.com/Shivasaireddy007/shopping_cart_system/actions/workflows/tests.yml/badge.svg)](https://github.com/Shivasaireddy007/shopping_cart_system/actions/workflows/tests.yml)
 
-An e-commerce backend built with Laravel 11 and MySQL: a versioned REST API for products,
+An e-commerce backend built with Laravel 12 and MySQL: a versioned REST API for products,
 cart and orders with JWT authentication, Razorpay payments, Shiprocket shipping,
 Elasticsearch faceted search and Redis caching. A storefront and admin panel come from an
 open-source e-commerce package; the API, payments, shipping, search and caching are my own code.
@@ -19,7 +19,7 @@ open-source e-commerce package; the API, payments, shipping, search and caching 
   and duplicates are ignored
 - **Faceted search** on Elasticsearch, where each facet's counts ignore its own filter, with an
   automatic fallback to MySQL if Elasticsearch is down
-- **89 automated tests** running on GitHub Actions against MySQL and Redis
+- **100 automated tests** running on GitHub Actions against MySQL and Redis
 
 ## Checkout and payment flow
 
@@ -68,6 +68,9 @@ All endpoints are under `/api/v1`. Amounts are in paise (₹1 = 100 paise).
 | POST | `/orders/{number}/verify-payment` | JWT | Confirm a payment with the Razorpay signature |
 | POST | `/orders/{number}/cancel` | JWT | Cancel an unpaid order and release its stock |
 | GET | `/orders/{number}/tracking` | JWT | Courier and tracking timeline |
+| GET / POST | `/admin/products` | Admin | List all products (incl. archived), create a product |
+| PATCH / DELETE | `/admin/products/{id}` | Admin | Update price, stock or details; archive |
+| POST / PATCH / DELETE | `/admin/categories[/{id}]` | Admin | Manage categories |
 | POST | `/api/webhooks/razorpay` | Signature | Payment captured or failed |
 | POST | `/api/webhooks/shiprocket` | Token | Shipment status updates |
 
@@ -75,7 +78,7 @@ All endpoints are under `/api/v1`. Amounts are in paise (₹1 = 100 paise).
 
 | Area | Tools |
 |---|---|
-| Backend | PHP 8.2+, Laravel 11 |
+| Backend | PHP 8.2+, Laravel 12 |
 | Database | MySQL 8 |
 | Auth | JWT (`php-open-source-saver/jwt-auth`) |
 | Cache, sessions, queues | Redis |
@@ -123,6 +126,12 @@ Load some products and build the search index:
 ```bash
 SEED_PRODUCTS=1000 php -d memory_limit=1G artisan db:seed --class=CatalogSeeder
 php artisan search:reindex
+```
+
+Give a registered user admin rights for the `/admin` endpoints:
+
+```bash
+php artisan users:make-admin you@example.com
 ```
 
 Start the app, a queue worker and the scheduler:
