@@ -20,6 +20,12 @@ return [
     // Requests per minute per user (or IP for guests) on the API.
     'api_rate_limit' => (int) env('API_RATE_LIMIT', 60),
 
+    // Login shown in the README for trying the public demo.
+    'demo' => [
+        'email' => env('DEMO_EMAIL', 'demo@shoppingcart.test'),
+        'password' => env('DEMO_PASSWORD', 'demo-password'),
+    ],
+
     'cart' => [
         'max_quantity_per_item' => 10,
     ],

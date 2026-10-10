@@ -23,9 +23,11 @@ class CatalogSeeder extends Seeder
         'Watches', 'Wallets', 'Belts', 'Backpacks', 'Sunglasses', 'Caps', 'Socks', 'Sportswear',
     ];
 
+    public ?int $total = null;
+
     public function run(): void
     {
-        $total = (int) env('SEED_PRODUCTS', 100000);
+        $total = $this->total ?? (int) env('SEED_PRODUCTS', 100000);
         $chunk = 1000;
 
         $categoryIds = collect(self::CATEGORIES)->map(fn (string $name) => Category::firstOrCreate(
