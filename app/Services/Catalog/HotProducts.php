@@ -20,6 +20,7 @@ class HotProducts
         $key = self::PREFIX.now()->format('YmdH');
 
         try {
+            // @phpstan-ignore arguments.count (Laravel's Redis connection proxies pipeline() with a callback)
             $this->redis()->pipeline(function ($pipe) use ($key, $productId) {
                 $pipe->zincrby($key, 1, (string) $productId);
                 $pipe->expire($key, 26 * 3600);

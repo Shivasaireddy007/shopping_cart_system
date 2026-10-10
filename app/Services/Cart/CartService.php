@@ -21,9 +21,9 @@ class CartService
     public function add(User $user, Product $product, int $quantity): Cart
     {
         $cart = $this->for($user);
-        $item = $cart->items->firstWhere('product_id', $product->id);
+        $current = (int) $cart->items->where('product_id', $product->id)->sum('quantity');
 
-        $this->setQuantity($cart, $product, ($item?->quantity ?? 0) + $quantity);
+        $this->setQuantity($cart, $product, $current + $quantity);
 
         return $cart->load('items.product');
     }

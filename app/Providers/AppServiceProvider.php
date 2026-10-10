@@ -91,8 +91,9 @@ class AppServiceProvider extends ServiceProvider
         });
 
         // resolve CMS pages sharing same route as categories and products
+        // The package binds this closure to its ResolveController, so $this->cms() is that controller's method.
         ResolveController::register('cms', function ($context, $path) {
-            return $this->cms($context, $path);
+            return $this->cms($context, $path); // @phpstan-ignore method.notFound
         });
     }
 }
