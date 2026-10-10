@@ -9,18 +9,26 @@ use App\Services\Orders\OrderCanceller;
 use App\Services\Payments\PaymentRecorder;
 use App\Services\Payments\RazorpayClient;
 use App\Services\Shipping\ShiprocketClient;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Cache;
 
+#[Group('Checkout and orders', weight: 5)]
 class OrderController extends Controller
 {
+    /**
+     * List your orders, newest first.
+     */
     public function index(Request $request): AnonymousResourceCollection
     {
         return OrderResource::collection($request->user()->orders()->latest('id')->paginate(10));
     }
 
+    /**
+     * Get one of your orders by its number.
+     */
     public function show(Request $request, Order $order): OrderResource
     {
         $this->authorizeOrder($request, $order);
@@ -50,6 +58,9 @@ class OrderController extends Controller
         return new OrderResource($order->load('items'));
     }
 
+    /**
+     * Get courier details and the tracking timeline for an order.
+     */
     public function tracking(Request $request, Order $order, ShiprocketClient $shiprocket): JsonResponse
     {
         $this->authorizeOrder($request, $order);
@@ -71,6 +82,11 @@ class OrderController extends Controller
         ]]);
     }
 
+    /**
+     * Cancel an unpaid order and release its stock.
+     *
+     * Returns `409` once the order is paid.
+     */
     public function cancel(Request $request, Order $order, OrderCanceller $canceller): OrderResource|JsonResponse
     {
         $this->authorizeOrder($request, $order);

@@ -5,14 +5,19 @@ namespace App\Http\Controllers\Api\V1\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CategoryResource;
 use App\Models\Category;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
+#[Group('Admin', weight: 6)]
 class CategoryController extends Controller
 {
+    /**
+     * Create a category.
+     */
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -27,6 +32,9 @@ class CategoryController extends Controller
         return (new CategoryResource(Category::create($data)))->response()->setStatusCode(201);
     }
 
+    /**
+     * Update a category.
+     */
     public function update(Request $request, Category $category): CategoryResource
     {
         $data = $request->validate([
@@ -40,6 +48,9 @@ class CategoryController extends Controller
         return new CategoryResource($category);
     }
 
+    /**
+     * Delete an empty category. Returns `409` if it still has products.
+     */
     public function destroy(Category $category): Response|JsonResponse
     {
         if ($category->products()->exists()) {

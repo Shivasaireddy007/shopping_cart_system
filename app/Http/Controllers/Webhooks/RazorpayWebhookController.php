@@ -6,12 +6,20 @@ use App\Http\Controllers\Controller;
 use App\Models\WebhookEvent;
 use App\Services\Payments\PaymentRecorder;
 use App\Services\Payments\RazorpayClient;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Throwable;
 
+#[Group('Webhooks', weight: 7)]
 class RazorpayWebhookController extends Controller
 {
+    /**
+     * Receive Razorpay payment events.
+     *
+     * Verified with the `X-Razorpay-Signature` HMAC of the raw body. Each event id is
+     * processed once; repeats return `{"status": "duplicate"}`.
+     */
     public function __invoke(Request $request, RazorpayClient $razorpay, PaymentRecorder $payments): JsonResponse
     {
         $payload = $request->getContent();

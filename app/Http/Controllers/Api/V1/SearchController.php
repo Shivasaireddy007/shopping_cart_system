@@ -8,13 +8,22 @@ use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use App\Services\Catalog\ProductQuery;
 use App\Services\Search\ProductSearch;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 
+#[Group('Search', weight: 3)]
 class SearchController extends Controller
 {
+    /**
+     * Full-text product search with facets.
+     *
+     * Runs on Elasticsearch: each facet's counts ignore its own selection, so other options
+     * stay visible. If Elasticsearch is unavailable, falls back to database filtering and
+     * returns `facets: null` with `meta.engine = "database"`.
+     */
     public function __invoke(SearchRequest $request, ProductSearch $search, ProductQuery $fallback): JsonResponse
     {
         $params = $request->validated();

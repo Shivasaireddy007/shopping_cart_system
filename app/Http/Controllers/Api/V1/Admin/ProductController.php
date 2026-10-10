@@ -6,10 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\Admin\ProductRequest;
 use App\Http\Resources\ProductResource;
 use App\Models\Product;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
+#[Group('Admin', weight: 6)]
 class ProductController extends Controller
 {
     /**
@@ -29,6 +31,9 @@ class ProductController extends Controller
         return ProductResource::collection($products);
     }
 
+    /**
+     * Create a product. The slug is generated from the name if not given.
+     */
     public function store(ProductRequest $request): JsonResponse
     {
         $product = Product::create($request->validated());
@@ -36,6 +41,9 @@ class ProductController extends Controller
         return (new ProductResource($product->load('category')))->response()->setStatusCode(201);
     }
 
+    /**
+     * Update a product, e.g. its price or stock.
+     */
     public function update(ProductRequest $request, Product $product): ProductResource
     {
         $product->update($request->validated());

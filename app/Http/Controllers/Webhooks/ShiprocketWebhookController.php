@@ -5,11 +5,19 @@ namespace App\Http\Controllers\Webhooks;
 use App\Http\Controllers\Controller;
 use App\Models\WebhookEvent;
 use App\Services\Shipping\ShipmentStatusUpdater;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+#[Group('Webhooks', weight: 7)]
 class ShiprocketWebhookController extends Controller
 {
+    /**
+     * Receive Shiprocket shipment status updates.
+     *
+     * Authenticated with the `x-api-key` header. Orders only move forward
+     * (paid → shipped → delivered), so late or repeated updates are ignored.
+     */
     public function __invoke(Request $request, ShipmentStatusUpdater $updater): JsonResponse
     {
         $token = (string) config('services.shiprocket.webhook_token');
