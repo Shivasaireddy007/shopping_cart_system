@@ -6,7 +6,7 @@ COPY resources ./resources
 RUN npm ci && npm run build
 
 # Use official PHP image with Apache
-FROM php:8.2-apache
+FROM php:8.3-apache
 
 # Install required PHP extensions
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -17,8 +17,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libzip-dev \
     unzip \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd intl pdo pdo_mysql mysqli zip \
+    && docker-php-ext-install gd intl opcache pdo pdo_mysql mysqli zip \
     && rm -rf /var/lib/apt/lists/*
+
+# Production PHP settings with opcache
+RUN cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" \
+    && printf 'opcache.enable=1\nopcache.validate_timestamps=0\nopcache.memory_consumption=128\nmemory_limit=256M\n' > "$PHP_INI_DIR/conf.d/zz-app.ini"
 
 # Enable Apache mod_rewrite for Laravel
 RUN a2enmod rewrite
@@ -41,7 +45,9 @@ COPY . /var/www/html/
 COPY --from=assets /app/public/build /var/www/html/public/build
 
 # Install PHP dependencies (vendor/ is excluded by .dockerignore)
-RUN composer install --no-dev --no-interaction --no-scripts --prefer-dist --optimize-autoloader
+RUN composer install --no-dev --no-interaction --no-scripts --prefer-dist --optimize-autoloader \
+    && php artisan package:discover --ansi \
+    && php artisan vendor:publish --tag=public --force
 
 # Set proper permissions
 RUN chown -R www-data:www-data /var/www/html \
@@ -50,7 +56,7 @@ RUN chown -R www-data:www-data /var/www/html \
 # Expose port 80 (Apache)
 EXPOSE 80
 
-# Start Apache
-CMD ["apache2-foreground"]
-
-
+# Prepare the database and start Apache (see docker/entrypoint.sh)
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint
+RUN chmod +x /usr/local/bin/entrypoint
+CMD ["entrypoint"]
