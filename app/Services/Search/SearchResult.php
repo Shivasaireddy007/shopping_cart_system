@@ -12,6 +12,5 @@ final class SearchResult
         public readonly array $ids,
         public readonly int $total,
         public readonly array $facets,
-    ) {
-    }
+    ) {}
 }

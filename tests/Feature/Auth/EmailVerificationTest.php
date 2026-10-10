@@ -4,9 +4,9 @@ namespace Tests\Feature\Auth;
 
 use App\Models\User;
 use Illuminate\Auth\Events\Verified;
-use Tests\Concerns\RefreshesDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
+use Tests\Concerns\RefreshesDatabase;
 use Tests\TestCase;
 
 class EmailVerificationTest extends TestCase

@@ -4,10 +4,11 @@ namespace Tests\Feature\Api;
 
 use App\Jobs\SyncProductToSearch;
 use App\Models\Product;
-use Tests\Concerns\RefreshesDatabase;
+use App\Services\Search\ProductIndex;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Http;
+use Tests\Concerns\RefreshesDatabase;
 use Tests\TestCase;
 
 class SearchTest extends TestCase
@@ -92,8 +93,8 @@ class SearchTest extends TestCase
         $active = Product::factory()->create();
         $inactive = Product::factory()->inactive()->create();
 
-        (new SyncProductToSearch($active->id))->handle(app(\App\Services\Search\ProductIndex::class));
-        (new SyncProductToSearch($inactive->id))->handle(app(\App\Services\Search\ProductIndex::class));
+        (new SyncProductToSearch($active->id))->handle(app(ProductIndex::class));
+        (new SyncProductToSearch($inactive->id))->handle(app(ProductIndex::class));
 
         Http::assertSent(fn ($r) => $r->method() === 'PUT' && str_ends_with($r->url(), "/products/_doc/{$active->id}") && $r['sku'] === $active->sku);
         Http::assertSent(fn ($r) => $r->method() === 'DELETE' && str_ends_with($r->url(), "/products/_doc/{$inactive->id}"));

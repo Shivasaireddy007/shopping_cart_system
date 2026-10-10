@@ -12,9 +12,7 @@ use Illuminate\Support\LazyCollection;
  */
 class ProductIndex
 {
-    public function __construct(private readonly ElasticsearchClient $es)
-    {
-    }
+    public function __construct(private readonly ElasticsearchClient $es) {}
 
     public function alias(): string
     {

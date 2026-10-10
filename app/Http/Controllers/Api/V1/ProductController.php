@@ -13,9 +13,7 @@ use Illuminate\Http\JsonResponse;
 
 class ProductController extends Controller
 {
-    public function __construct(private readonly CatalogCache $cache)
-    {
-    }
+    public function __construct(private readonly CatalogCache $cache) {}
 
     public function index(ProductIndexRequest $request, ProductQuery $query): JsonResponse
     {

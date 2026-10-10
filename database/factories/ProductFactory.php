@@ -3,16 +3,19 @@
 namespace Database\Factories;
 
 use App\Models\Category;
+use App\Models\Product;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Product>
+ * @extends Factory<Product>
  */
 class ProductFactory extends Factory
 {
     private const BRANDS = ['Nike', 'Adidas', 'Puma', 'Reebok', 'Bata', 'Woodland', 'Campus', 'Sparx'];
+
     private const COLORS = ['black', 'white', 'red', 'blue', 'green', 'grey'];
+
     private const SIZES = ['S', 'M', 'L', 'XL'];
 
     public function definition(): array

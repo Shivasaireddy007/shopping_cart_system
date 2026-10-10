@@ -5,10 +5,10 @@ namespace Tests\Feature\Api;
 use App\Models\Product;
 use App\Services\Catalog\CatalogCache;
 use App\Services\Catalog\HotProducts;
-use Tests\Concerns\RefreshesDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
+use Tests\Concerns\RefreshesDatabase;
 use Tests\TestCase;
 
 class CatalogCacheTest extends TestCase

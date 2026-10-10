@@ -5,8 +5,8 @@ namespace Tests\Feature\Api;
 use App\Enums\OrderStatus;
 use App\Models\Product;
 use App\Models\User;
-use Tests\Concerns\RefreshesDatabase;
 use Tests\Concerns\PlacesOrders;
+use Tests\Concerns\RefreshesDatabase;
 use Tests\TestCase;
 
 class OrderCancellationTest extends TestCase

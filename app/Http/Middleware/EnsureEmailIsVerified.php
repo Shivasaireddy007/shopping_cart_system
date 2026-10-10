@@ -4,18 +4,19 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Redirect;
-use Illuminate\Support\Facades\URL;
 
 class EnsureEmailIsVerified
 {
     /**
      * Handle an incoming request.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
+     * @param  Request  $request
      * @param  string|null  $redirectToRoute
-     * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse|null
+     * @return Response|RedirectResponse|null
      */
     public function handle($request, Closure $next, $redirectToRoute = null)
     {
@@ -25,12 +26,12 @@ class EnsureEmailIsVerified
         ) {
             $params = [];
 
-            if( config( 'app.shop_multilocale' ) ) {
-                $params['locale'] = $request->route( 'locale', $request->input( 'locale', app()->getLocale() ) );
+            if (config('app.shop_multilocale')) {
+                $params['locale'] = $request->route('locale', $request->input('locale', app()->getLocale()));
             }
 
-            if( config( 'app.shop_multishop' ) ) {
-                $params['site'] = $request->route( 'site', $request->input( 'site', config( 'shop.mshop.locale.site', 'default' ) ) );
+            if (config('app.shop_multishop')) {
+                $params['site'] = $request->route('site', $request->input('site', config('shop.mshop.locale.site', 'default')));
             }
 
             return $request->expectsJson()

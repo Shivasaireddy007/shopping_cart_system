@@ -9,11 +9,12 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
 use App\Services\Shipping\ShiprocketClient;
+use GuzzleHttp\Promise\PromiseInterface;
 use Illuminate\Http\Client\RequestException;
-use Tests\Concerns\RefreshesDatabase;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Http;
 use Tests\Concerns\PlacesOrders;
+use Tests\Concerns\RefreshesDatabase;
 use Tests\TestCase;
 
 class ShippingTest extends TestCase
@@ -129,7 +130,7 @@ class ShippingTest extends TestCase
     }
 
     /**
-     * @param  array<int, \GuzzleHttp\Promise\PromiseInterface>|null  $awbResponses
+     * @param  array<int, PromiseInterface>|null  $awbResponses
      */
     private function fakeShiprocket(?array $awbResponses = null): void
     {

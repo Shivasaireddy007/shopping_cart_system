@@ -11,9 +11,7 @@ use Illuminate\Support\Facades\Http;
  */
 class ElasticsearchClient
 {
-    public function __construct(private readonly string $host)
-    {
-    }
+    public function __construct(private readonly string $host) {}
 
     public static function fromConfig(): self
     {

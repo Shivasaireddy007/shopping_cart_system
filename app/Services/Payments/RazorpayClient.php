@@ -18,8 +18,7 @@ class RazorpayClient
         private readonly string $keySecret,
         private readonly string $webhookSecret,
         private readonly string $baseUrl,
-    ) {
-    }
+    ) {}
 
     public static function fromConfig(): self
     {

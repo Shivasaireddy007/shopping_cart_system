@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use Tests\Concerns\RefreshesDatabase;
 use Tests\TestCase;
 
 class ExampleTest extends TestCase

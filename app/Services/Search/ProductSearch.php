@@ -24,8 +24,7 @@ class ProductSearch
     public function __construct(
         private readonly ElasticsearchClient $es,
         private readonly ProductIndex $index,
-    ) {
-    }
+    ) {}
 
     /**
      * @param  array{q?: string, brand?: array, category?: array, color?: array, size?: array, min_price?: int, max_price?: int, in_stock?: bool, sort?: string, page?: int, per_page?: int}  $params

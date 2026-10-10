@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
-use App\Providers\RouteServiceProvider;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -18,6 +17,7 @@ class AuthenticatedSessionController extends Controller
     public function create(): View
     {
         session()->put('url.intended', url()->previous());
+
         return view('auth.login');
     }
 
@@ -30,7 +30,7 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(airoute( 'aimeos_home' ));
+        return redirect()->intended(airoute('aimeos_home'));
     }
 
     /**
@@ -44,6 +44,6 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerateToken();
 
-        return redirect(airoute( 'aimeos_home' ));
+        return redirect(airoute('aimeos_home'));
     }
 }

@@ -18,15 +18,13 @@ use Illuminate\Queue\SerializesModels;
  * (e.g. AWB assignment timing out) continues instead of creating a
  * duplicate Shiprocket order.
  */
-class CreateShipment implements ShouldQueue, ShouldBeUnique
+class CreateShipment implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 5;
 
-    public function __construct(public readonly Order $order)
-    {
-    }
+    public function __construct(public readonly Order $order) {}
 
     /**
      * @return array<int, int>

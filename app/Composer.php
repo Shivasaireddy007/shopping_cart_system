@@ -3,26 +3,20 @@
 /**
  * @license MIT, https://opensource.org/licenses/MIT
  * @copyright Aimeos (aimeos.org), 2017
- * @package aimeos
  */
-
 
 namespace App;
 
 use Composer\Script\Event;
 use Composer\Util\ProcessExecutor;
 use Symfony\Component\Process\PhpExecutableFinder;
-use Symfony\Component\Filesystem\Filesystem;
-
 
 /**
  * Performs setup during composer installs
- *
- * @package aimeos
  */
 class Composer
 {
-	private static $template = '
+    private static $template = '
 <fg=blue>
     ___    _
    /   |  (_)___ ___  ___  ____  _____
@@ -41,170 +35,164 @@ Made with <fg=green>love</> by the Aimeos community. Be a part of it!
 <fg=cyan>Setup cronjobs:</> https://aimeos.org/docs/latest/laravel/setup/#cronjobs
 ';
 
+    /**
+     * Creates a new admin account.
+     *
+     * @param  Event  $event  Event instance
+     *
+     * @throws \RuntimeException If an error occured
+     */
+    public static function account(Event $event)
+    {
+        $io = $event->getIO();
 
-	/**
-	 * Creates a new admin account.
-	 *
-	 * @param Event $event Event instance
-	 * @throws \RuntimeException If an error occured
-	 */
-	public static function account( Event $event )
-	{
-		$io = $event->getIO();
+        $io->write('Create admin account');
+        flush(); // Enforce order of messages
 
-		$io->write( 'Create admin account' );
-		flush(); // Enforce order of messages
+        $email = $io->ask('- E-Mail: ');
+        $passwd = $io->askAndHideAnswer('- Password: ');
 
-		$email = $io->ask( '- E-Mail: ' );
-		$passwd = $io->askAndHideAnswer( '- Password: ' );
+        if ($email && $passwd) {
+            $options = [
+                escapeshellarg($email),
+                '--password='.escapeshellarg($passwd),
+                '--super',
+                '--admin',
+            ];
 
-		if( $email && $passwd )
-		{
-			$options = [
-				escapeshellarg( $email ),
-				'--password=' . escapeshellarg( $passwd ),
-				'--super',
-				'--admin'
-			];
+            self::executeCommand($event, 'aimeos:account', $options);
+        } else {
+            $io->write('No e-mail and password, skipped creating admin account');
+        }
+    }
 
-			self::executeCommand( $event, 'aimeos:account', $options );
-		}
-		else
-		{
-			$io->write( 'No e-mail and password, skipped creating admin account' );
-		}
-	}
+    /**
+     * Configures the .env file.
+     *
+     * @param  Event  $event  Event instance
+     *
+     * @throws \RuntimeException If an error occured
+     */
+    public static function configure(Event $event)
+    {
+        $io = $event->getIO();
+        $filename = dirname(__DIR__).DIRECTORY_SEPARATOR.'.env';
 
+        if (($content = file_get_contents($filename)) === false) {
+            throw new \RuntimeException(sprintf('Can not read file "%1$s"', $filename));
+        }
 
-	/**
-	 * Configures the .env file.
-	 *
-	 * @param Event $event Event instance
-	 * @throws \RuntimeException If an error occured
-	 */
-	public static function configure( Event $event )
-	{
-		$io = $event->getIO();
-		$filename = dirname( __DIR__ ) . DIRECTORY_SEPARATOR . '.env';
+        $matches = [];
+        if (preg_match("/^APP_KEY\=(.*)$/m", $content, $matches) === 1) {
+            $content = preg_replace("/^APP_KEY\=.*$/m", 'APP_KEY="'.trim($matches[1], '"').'"', $content);
+        }
 
-		if( ( $content = file_get_contents( $filename ) ) === false ) {
-			throw new \RuntimeException( sprintf( 'Can not read file "%1$s"', $filename ) );
-		}
+        if (($config = parse_ini_string($content, false, INI_SCANNER_RAW)) === false) {
+            throw new \RuntimeException(sprintf('Can not parse file "%1$s"', $filename));
+        }
 
-		$matches = [];
-		if( preg_match( "/^APP_KEY\=(.*)$/m", $content, $matches ) === 1 ) {
-			$content = preg_replace( "/^APP_KEY\=.*$/m", 'APP_KEY="' . trim( $matches[1], '"' ) . '"', $content );
-		}
+        $io->write('Database setup');
+        flush(); // Enforce order of messages
 
-		if( ( $config = parse_ini_string( $content, false, INI_SCANNER_RAW ) ) === false ) {
-			throw new \RuntimeException( sprintf( 'Can not parse file "%1$s"', $filename ) );
-		}
+        foreach (['DB_CONNECTION', 'DB_HOST', 'DB_PORT', 'DB_DATABASE', 'DB_USERNAME'] as $key) {
+            $config[$key] = $io->ask('- '.$key.' ('.$config[$key].'): ', $config[$key]);
+        }
+        $config['DB_PASSWORD'] = $io->askAndHideAnswer('- DB_PASSWORD: ', $config['DB_PASSWORD']);
 
+        $io->write('Mail setup');
+        flush(); // Enforce order of messages
 
-		$io->write( 'Database setup' );
-		flush(); // Enforce order of messages
+        foreach (['MAIL_MAILER', 'MAIL_HOST', 'MAIL_PORT', 'MAIL_USERNAME', 'MAIL_ENCRYPTION'] as $key) {
+            $config[$key] = $io->ask('- '.$key.' ('.$config[$key].'): ', $config[$key]);
+        }
+        $config['MAIL_PASSWORD'] = $io->askAndHideAnswer('- MAIL_PASSWORD: ', $config['MAIL_PASSWORD']);
 
-		foreach( ['DB_CONNECTION', 'DB_HOST', 'DB_PORT', 'DB_DATABASE', 'DB_USERNAME'] as $key ) {
-			$config[$key] = $io->ask( '- ' . $key . ' (' . $config[$key] . '): ', $config[$key] );
-		}
-		$config['DB_PASSWORD'] = $io->askAndHideAnswer( '- DB_PASSWORD: ', $config['DB_PASSWORD'] );
+        if (file_put_contents($filename, self::createIniString($config)) === false) {
+            throw new \RuntimeException(sprintf('Can not write file "%1$s"', $filename));
+        }
+    }
 
-		$io->write( 'Mail setup' );
-		flush(); // Enforce order of messages
+    /**
+     * @param  Event  $event  Event instance
+     *
+     * @throws \RuntimeException If an error occured
+     */
+    public static function success(Event $event)
+    {
+        $event->getIO()->write(self::$template);
+    }
 
-		foreach( ['MAIL_MAILER', 'MAIL_HOST', 'MAIL_PORT', 'MAIL_USERNAME', 'MAIL_ENCRYPTION'] as $key ) {
-			$config[$key] = $io->ask( '- ' . $key . ' (' . $config[$key] . '): ', $config[$key] );
-		}
-		$config['MAIL_PASSWORD'] = $io->askAndHideAnswer( '- MAIL_PASSWORD: ', $config['MAIL_PASSWORD'] );
+    /**
+     * Sets up the shop database.
+     *
+     * @param  Event  $event  Event instance
+     *
+     * @throws \RuntimeException If an error occured
+     */
+    public static function setup(Event $event)
+    {
+        $options = [];
 
-		if( file_put_contents( $filename, self::createIniString( $config ) ) === false ) {
-			throw new \RuntimeException( sprintf( 'Can not write file "%1$s"', $filename ) );
-		}
-	}
+        if ($event->isDevMode()) {
+            $options[] = '--option=setup/default/demo:1';
+        }
 
+        self::executeCommand($event, 'aimeos:setup', $options);
+    }
 
-	/**
-	 * @param Event $event Event instance
-	 * @throws \RuntimeException If an error occured
-	 */
-	public static function success( Event $event )
-	{
-		$event->getIO()->write( self::$template );
-	}
+    /**
+     * Creates a INI file compatible string from key/value pairs
+     *
+     * @param  array  $config  Associative list of key/value pairs
+     * @return string INI file compatible string
+     */
+    protected static function createIniString(array $config)
+    {
+        $content = '';
 
+        foreach ($config as $key => $value) {
+            $value = (string) $value;
 
-	/**
-	 * Sets up the shop database.
-	 *
-	 * @param Event $event Event instance
-	 * @throws \RuntimeException If an error occured
-	 */
-	public static function setup( Event $event )
-	{
-		$options = [];
+            if (preg_match('/[\s#"$]/', $value)) {
+                $value = '"'.addcslashes($value, '"').'"';
+            }
 
-		if( $event->isDevMode() ) {
-			$options[] = '--option=setup/default/demo:1';
-		}
+            $content .= $key.'='.$value."\n";
+        }
 
-		self::executeCommand( $event, 'aimeos:setup', $options );
-	}
+        return $content."\n";
+    }
 
+    /**
+     * Executes a Symphony command.
+     *
+     * @param  Event  $event  Command event object
+     * @param  string  $cmd  Command name to execute, e.g. "aimeos:update"
+     * @param array List of configuration options for the given command
+     *
+     * @throws \RuntimeException If the command couldn't be executed
+     */
+    protected static function executeCommand(Event $event, $cmd, array $options = [])
+    {
+        $process = new ProcessExecutor;
+        $process->execute('"'.self::getPhp().'" artisan '.$cmd.' '.implode(' ', $options));
+    }
 
-	/**
-	 * Creates a INI file compatible string from key/value pairs
-	 *
-	 * @param array $config Associative list of key/value pairs
-	 * @return string INI file compatible string
-	 */
-	protected static function createIniString( array $config )
-	{
-		$content = '';
+    /**
+     * Returns the path to the PHP interpreter.
+     *
+     * @return string Path to the PHP command
+     *
+     * @throws \RuntimeException If PHP interpreter couldn't be found
+     */
+    protected static function getPhp()
+    {
+        $phpFinder = new PhpExecutableFinder;
 
-		foreach( $config as $key => $value )
-		{
-			$value = (string) $value;
+        if (! ($phpPath = $phpFinder->find())) {
+            throw new \RuntimeException('The php executable could not be found, add it to your PATH environment variable and try again');
+        }
 
-			if( preg_match( '/[\s#"$]/', $value ) ) {
-				$value = '"' . addcslashes( $value, '"' ) . '"';
-			}
-
-			$content .= $key . '=' . $value . "\n";
-		}
-
-		return $content . "\n";
-	}
-
-
-	/**
-	 * Executes a Symphony command.
-	 *
-	 * @param Event $event Command event object
-	 * @param string $cmd Command name to execute, e.g. "aimeos:update"
-	 * @param array List of configuration options for the given command
-	 * @throws \RuntimeException If the command couldn't be executed
-	 */
-	protected static function executeCommand( Event $event, $cmd, array $options = array() )
-	{
-		$process = new ProcessExecutor();
-		$process->execute( '"' . self::getPhp() . '" artisan ' . $cmd . ' ' . implode( ' ', $options ) );
-	}
-
-
-	/**
-	 * Returns the path to the PHP interpreter.
-	 *
-	 * @return string Path to the PHP command
-	 * @throws \RuntimeException If PHP interpreter couldn't be found
-	 */
-	protected static function getPhp()
-	{
-		$phpFinder = new PhpExecutableFinder;
-
-		if( !( $phpPath = $phpFinder->find() ) ) {
-			throw new \RuntimeException( 'The php executable could not be found, add it to your PATH environment variable and try again' );
-		}
-
-		return $phpPath;
-	}
+        return $phpPath;
+    }
 }

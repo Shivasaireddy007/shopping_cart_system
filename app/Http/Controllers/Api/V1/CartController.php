@@ -12,9 +12,7 @@ use Illuminate\Http\Response;
 
 class CartController extends Controller
 {
-    public function __construct(private readonly CartService $carts)
-    {
-    }
+    public function __construct(private readonly CartService $carts) {}
 
     public function show(Request $request): CartResource
     {

@@ -4,8 +4,8 @@ namespace Tests\Feature\Auth;
 
 use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
-use Tests\Concerns\RefreshesDatabase;
 use Illuminate\Support\Facades\Notification;
+use Tests\Concerns\RefreshesDatabase;
 use Tests\TestCase;
 
 class PasswordResetTest extends TestCase

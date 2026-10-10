@@ -18,10 +18,9 @@ return [
 
     'supports_credentials' => false,
     'paths' => ['api/*', 'vendor/shop/themes/default/assets/*'],
-'allowed_methods' => ['*'],
-'allowed_origins' => ['*'],
-'allowed_origins_patterns' => [],
-'allowed_headers' => ['*'],
-
+    'allowed_methods' => ['*'],
+    'allowed_origins' => ['*'],
+    'allowed_origins_patterns' => [],
+    'allowed_headers' => ['*'],
 
 ];

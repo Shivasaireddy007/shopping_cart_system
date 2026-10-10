@@ -7,8 +7,8 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
 use App\Services\Cart\CartService;
-use Tests\Concerns\RefreshesDatabase;
 use Tests\Concerns\PlacesOrders;
+use Tests\Concerns\RefreshesDatabase;
 use Tests\TestCase;
 
 class CheckoutTest extends TestCase

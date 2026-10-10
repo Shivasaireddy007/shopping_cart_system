@@ -21,8 +21,7 @@ class CheckoutService
     public function __construct(
         private readonly RazorpayClient $razorpay,
         private readonly OrderCanceller $canceller,
-    ) {
-    }
+    ) {}
 
     /**
      * Turns the user's cart into an order and opens a Razorpay order for it.
@@ -39,7 +38,7 @@ class CheckoutService
         $cart = Cart::where('user_id', $user->id)->with('items')->first();
 
         if ($cart === null || $cart->items->isEmpty()) {
-            throw new EmptyCartException();
+            throw new EmptyCartException;
         }
 
         $order = DB::transaction(fn () => $this->reserve($user, $cart, $shippingAddress));

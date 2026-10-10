@@ -23,8 +23,7 @@ class ShiprocketClient
         private readonly string $password,
         private readonly string $pickupLocation,
         private readonly string $baseUrl,
-    ) {
-    }
+    ) {}
 
     public static function fromConfig(): self
     {

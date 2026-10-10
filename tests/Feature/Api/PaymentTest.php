@@ -7,9 +7,9 @@ use App\Events\OrderPaid;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
-use Tests\Concerns\RefreshesDatabase;
 use Illuminate\Support\Facades\Event;
 use Tests\Concerns\PlacesOrders;
+use Tests\Concerns\RefreshesDatabase;
 use Tests\TestCase;
 
 class PaymentTest extends TestCase

@@ -19,22 +19,19 @@ class RouteServiceProvider extends ServiceProvider
      */
     public const HOME = '/profile';
 
-
     /**
      * Returns the relative URL to the home of the user
      *
      * @return string Relative URL
      */
-
     public static function home()
     {
-        if( config( 'app.shop_registration' ) ) {
+        if (config('app.shop_registration')) {
             return route('aimeos_shop_admin');
         }
 
-        return airoute( 'aimeos_shop_account' );
+        return airoute('aimeos_shop_account');
     }
-
 
     /**
      * Define your route model bindings, pattern filters, etc.

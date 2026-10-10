@@ -13,43 +13,39 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/ready', function() {
+Route::get('/ready', function () {
     return 'OK';
 });
 
 $params = [];
 $conf = ['prefix' => '', 'where' => []];
 
-if( config( 'app.shop_multilocale' ) )
-{
+if (config('app.shop_multilocale')) {
     $conf['prefix'] .= '{locale}';
     $conf['where']['locale'] = '[a-z]{2}(\_[A-Z]{2})?';
     $params = ['locale' => app()->getLocale()];
 }
 
-if( config( 'app.shop_multishop' ) )
-{
+if (config('app.shop_multishop')) {
     $conf['prefix'] .= '/{site}';
     $conf['where']['site'] = '[A-Za-z0-9\.\-]+';
 }
 
-if( $conf['prefix'] )
-{
-    Route::get('/', function() use ($params) {
+if ($conf['prefix']) {
+    Route::get('/', function () use ($params) {
         return redirect(airoute('aimeos_home', $params));
     });
 }
 
-Route::group($conf, function() {
+Route::group($conf, function () {
     require __DIR__.'/auth.php';
 });
 
-if( config( 'app.shop_multiroute' ) )
-{
-    Route::group( $conf + ['middleware' => ['web']], function() {
-        Route::match( ['GET', 'POST'], '/{path?}', array(
+if (config('app.shop_multiroute')) {
+    Route::group($conf + ['middleware' => ['web']], function () {
+        Route::match(['GET', 'POST'], '/{path?}', [
             'as' => 'aimeos_resolve',
-            'uses' => 'Aimeos\Shop\Controller\ResolveController@indexAction'
-        ) )->where( ['locale' => '[a-z]{2}(\_[A-Z]{2})?', 'site' => '[A-Za-z0-9\.\-]+', 'path' => '.*'] );
+            'uses' => 'Aimeos\Shop\Controller\ResolveController@indexAction',
+        ])->where(['locale' => '[a-z]{2}(\_[A-Z]{2})?', 'site' => '[A-Za-z0-9\.\-]+', 'path' => '.*']);
     });
 }
