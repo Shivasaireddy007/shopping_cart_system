@@ -25,5 +25,8 @@ class AuthServiceProvider extends ServiceProvider
     public function boot()
     {
         Gate::define('manage-catalog', fn (User $user) => $user->is_admin);
+
+        // API docs at /docs/api are public, like the API itself.
+        Gate::define('viewApiDocs', fn (?User $user = null) => true);
     }
 }

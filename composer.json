@@ -12,6 +12,7 @@
         "php": "^8.2",
         "composer-runtime-api": "^2.2",
         "aimeos/aimeos-laravel": "~2026.10.1",
+        "dedoc/scramble": "^0.13.47",
         "guzzlehttp/guzzle": "^7.2",
         "laravel/framework": "^12.69",
         "laravel/sanctum": "^4.0",
