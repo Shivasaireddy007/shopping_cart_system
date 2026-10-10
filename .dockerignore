@@ -2,6 +2,8 @@
 .env
 .env.backup
 node_modules
+public/build
+public/hot
 vendor
 storage/logs/*
 storage/framework/cache/data/*
