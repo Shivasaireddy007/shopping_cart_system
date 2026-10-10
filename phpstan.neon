@@ -1,0 +1,15 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    paths:
+        - app/
+    level: 5
+    excludePaths:
+        # Runs inside Composer's own process during create-project, where Composer's classes exist.
+        - app/Composer.php
+    ignoreErrors:
+        # The shop package's managers and items are created through dynamic factories typed as base interfaces.
+        -
+            message: '#Aimeos\\MShop\\Common\\(Manager|Item)\\Iface#'
+            path: app/Http/Controllers/Auth/RegisteredUserController.php
