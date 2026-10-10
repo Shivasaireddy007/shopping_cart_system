@@ -44,6 +44,7 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'is_admin' => 'boolean',
     ];
 
     public function cart(): HasOne
