@@ -18,7 +18,7 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
     /**
      * The attributes that are mass assignable.
      *
-     * @var array<int, string>
+     * @var list<string>
      */
     protected $fillable = [
         'name',
@@ -30,7 +30,7 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
     /**
      * The attributes that should be hidden for serialization.
      *
-     * @var array<int, string>
+     * @var list<string>
      */
     protected $hidden = [
         'password',
@@ -47,11 +47,13 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
         'is_admin' => 'boolean',
     ];
 
+    /** @return HasOne<Cart, $this> */
     public function cart(): HasOne
     {
         return $this->hasOne(Cart::class);
     }
 
+    /** @return HasMany<Order, $this> */
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class);

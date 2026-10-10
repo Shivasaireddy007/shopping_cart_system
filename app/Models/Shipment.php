@@ -17,6 +17,7 @@ class Shipment extends Model
         'status_updated_at' => 'datetime',
     ];
 
+    /** @return BelongsTo<Order, $this> */
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);

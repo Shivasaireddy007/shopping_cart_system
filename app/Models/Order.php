@@ -38,21 +38,25 @@ class Order extends Model
         return 'number';
     }
 
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /** @return HasMany<OrderItem, $this> */
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
     }
 
+    /** @return HasMany<Payment, $this> */
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
     }
 
+    /** @return HasOne<Shipment, $this> */
     public function shipment(): HasOne
     {
         return $this->hasOne(Shipment::class);
