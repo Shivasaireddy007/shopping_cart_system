@@ -71,6 +71,9 @@ jobs:
           php artisan key:generate
           php artisan jwt:secret --force
 
+      - name: Check config can be cached for production
+        run: php artisan config:cache && php artisan route:cache && php artisan optimize:clear
+
       - name: Set up database
         run: |
           php artisan migrate --force
