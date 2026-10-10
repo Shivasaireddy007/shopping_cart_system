@@ -71,6 +71,11 @@ jobs:
           php artisan key:generate
           php artisan jwt:secret --force
 
+      - name: Check API docs are up to date
+        run: |
+          php artisan scramble:export --path=/tmp/openapi.json
+          diff -u docs/openapi.json /tmp/openapi.json || (echo "Run: php artisan scramble:export --path=docs/openapi.json" && exit 1)
+
       - name: Set up database
         run: |
           php artisan migrate --force
