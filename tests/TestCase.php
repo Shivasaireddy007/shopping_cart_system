@@ -17,6 +17,9 @@ abstract class TestCase extends BaseTestCase
 
         // Tests must never reach Razorpay, Shiprocket or Elasticsearch for real.
         Http::preventStrayRequests();
+
+        // Pages render without needing a Vite build (public/build is not committed).
+        $this->withoutVite();
     }
 
     /**
