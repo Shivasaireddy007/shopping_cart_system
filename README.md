@@ -21,6 +21,35 @@ open-source e-commerce package; the API, payments, shipping, search and caching 
   automatic fallback to MySQL if Elasticsearch is down
 - **100 automated tests** running on GitHub Actions against MySQL and Redis
 
+## Planned UI
+
+Design mockups of the storefront and admin frontend that will be built on this API.
+These screens aren't in the repository yet; screenshots from the running app will replace them.
+
+**Storefront**
+
+![Search results with brand, colour, price and size filters](docs/images/01-search.png)
+
+| Product page | Cart |
+|---|---|
+| ![Product page](docs/images/02-product.png) | ![Cart with live totals](docs/images/03-cart.png) |
+
+| Razorpay checkout | Order tracking |
+|---|---|
+| ![Razorpay payment window](docs/images/04-checkout-razorpay.png) | ![Shiprocket tracking timeline](docs/images/05-order-tracking.png) |
+
+**Admin**
+
+![Admin dashboard with orders, revenue, low stock and hot products](docs/images/06-admin-dashboard.png)
+
+| Orders | Products |
+|---|---|
+| ![Admin orders](docs/images/07-admin-orders.png) | ![Admin products](docs/images/08-admin-products.png) |
+
+| Edit product | Shipments |
+|---|---|
+| ![Edit product form](docs/images/09-admin-edit-product.png) | ![Shipments with courier status](docs/images/10-admin-shipments.png) |
+
 ## Checkout and payment flow
 
 ```mermaid
