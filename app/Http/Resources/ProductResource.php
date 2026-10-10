@@ -22,6 +22,7 @@ class ProductResource extends JsonResource
             'currency' => 'INR',
             'in_stock' => $this->stock > 0,
             'stock' => $this->stock,
+            'is_active' => $this->is_active,
             'attributes' => $this->attributes ?? (object) [],
             'category' => new CategoryResource($this->whenLoaded('category')),
         ];

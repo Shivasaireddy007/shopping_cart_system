@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Admin;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CartController;
 use App\Http\Controllers\Api\V1\CheckoutController;
@@ -51,6 +52,17 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::post('orders/{order}/verify-payment', [OrderController::class, 'verifyPayment'])->name('orders.verify-payment');
         Route::post('orders/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
         Route::get('orders/{order}/tracking', [OrderController::class, 'tracking'])->name('orders.tracking');
+    });
+
+    Route::prefix('admin')->name('admin.')->middleware(['auth:api', 'can:manage-catalog'])->group(function () {
+        Route::get('products', [Admin\ProductController::class, 'index'])->name('products.index');
+        Route::post('products', [Admin\ProductController::class, 'store'])->name('products.store');
+        Route::patch('products/{product}', [Admin\ProductController::class, 'update'])->name('products.update');
+        Route::delete('products/{product}', [Admin\ProductController::class, 'destroy'])->name('products.destroy');
+
+        Route::post('categories', [Admin\CategoryController::class, 'store'])->name('categories.store');
+        Route::patch('categories/{category}', [Admin\CategoryController::class, 'update'])->name('categories.update');
+        Route::delete('categories/{category}', [Admin\CategoryController::class, 'destroy'])->name('categories.destroy');
     });
 });
 
