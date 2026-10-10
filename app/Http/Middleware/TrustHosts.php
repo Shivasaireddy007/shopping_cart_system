@@ -38,8 +38,9 @@ class TrustHosts extends Middleware
     {
         $domains = [$this->allSubdomainsOfApplicationUrl(), '10\.[0-9]+\.[0-9]+\.[0-9]+']; // private IPs for Kubernetes probe checks
 
-        if ($domain = $request->host()) {
-            $domains[] = DB::table('mshop_locale_site')->where('code', $domain)->first();
+        // Trust custom shop domains registered as site codes.
+        if (($domain = $request->host()) && DB::table('mshop_locale_site')->where('code', $domain)->exists()) {
+            $domains[] = '^'.preg_quote($domain).'$';
         }
 
         return $domains;
