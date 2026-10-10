@@ -2,7 +2,6 @@
 
 use Dedoc\Scramble\Http\Middleware\RestrictedDocsAccess;
 use Dedoc\Scramble\SecurityDocumentation\MiddlewareAuthSecurityStrategy;
-use Dedoc\Scramble\Support\Generator\SecurityScheme;
 
 return [
     /*
@@ -196,9 +195,7 @@ MD,
     // 'security_strategy' => \Dedoc\Scramble\SecurityDocumentation\MiddlewareAuthSecurityStrategy::class,
     'security_strategy' => [
         MiddlewareAuthSecurityStrategy::class,
-        [
-            'middleware' => ['auth:api'],
-            'scheme' => SecurityScheme::http('bearer', 'JWT'),
-        ],
+        // Plain values only: an object here breaks "php artisan config:cache".
+        ['middleware' => ['auth:api']],
     ],
 ];

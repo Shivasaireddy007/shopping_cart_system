@@ -2304,8 +2304,7 @@
         "securitySchemes": {
             "http": {
                 "type": "http",
-                "scheme": "bearer",
-                "bearerFormat": "JWT"
+                "scheme": "bearer"
             }
         },
         "schemas": {
