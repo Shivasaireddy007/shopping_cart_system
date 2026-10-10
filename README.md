@@ -53,6 +53,12 @@ reserved stock back.
 
 All endpoints are under `/api/v1`. Amounts are in paise (₹1 = 100 paise).
 
+**Interactive docs:** with the app running, open [`/docs/api`](http://localhost:8000/docs/api) to browse
+every endpoint, its parameters and response shapes, and send test requests with a JWT.
+The OpenAPI 3.1 spec is committed at [`docs/openapi.json`](docs/openapi.json); import it into
+Postman or Insomnia to get a ready-made collection. It is generated from the code with
+`php artisan scramble:export --path=docs/openapi.json`, and CI fails if it is out of date.
+
 | Method | Endpoint | Auth | Purpose |
 |---|---|---|---|
 | POST | `/auth/register`, `/auth/login` | – | Get a JWT |
