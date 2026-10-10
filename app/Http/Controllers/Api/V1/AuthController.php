@@ -8,6 +8,7 @@ use App\Http\Requests\Api\RegisterRequest;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
+use PHPOpenSourceSaver\JWTAuth\JWTGuard;
 
 class AuthController extends Controller
 {
@@ -19,12 +20,14 @@ class AuthController extends Controller
             'password' => Hash::make($request->validated('password')),
         ]);
 
-        return $this->tokenResponse(auth('api')->login($user), 201);
+        return $this->tokenResponse($this->guard()->login($user), 201);
     }
 
     public function login(LoginRequest $request): JsonResponse
     {
-        if (! $token = auth('api')->attempt($request->validated())) {
+        $token = $this->guard()->attempt($request->validated());
+
+        if (! is_string($token)) {
             return response()->json(['message' => 'Invalid credentials.'], 401);
         }
 
@@ -33,19 +36,25 @@ class AuthController extends Controller
 
     public function me(): JsonResponse
     {
-        return response()->json(['data' => auth('api')->user()]);
+        return response()->json(['data' => $this->guard()->user()]);
     }
 
     public function refresh(): JsonResponse
     {
-        return $this->tokenResponse(auth('api')->refresh());
+        return $this->tokenResponse($this->guard()->refresh());
     }
 
     public function logout(): JsonResponse
     {
-        auth('api')->logout();
+        $this->guard()->logout();
 
         return response()->json(['message' => 'Logged out.']);
+    }
+
+    private function guard(): JWTGuard
+    {
+        /** @var JWTGuard */
+        return auth('api');
     }
 
     private function tokenResponse(string $token, int $status = 200): JsonResponse
@@ -53,7 +62,7 @@ class AuthController extends Controller
         return response()->json([
             'access_token' => $token,
             'token_type' => 'bearer',
-            'expires_in' => auth('api')->factory()->getTTL() * 60,
+            'expires_in' => $this->guard()->factory()->getTTL() * 60,
         ], $status);
     }
 }
