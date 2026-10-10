@@ -49,6 +49,16 @@ class ShippingTest extends TestCase
         Bus::assertDispatched(CreateShipment::class, fn ($job) => $job->order->is($this->order));
     }
 
+    public function test_no_shipment_is_queued_when_shiprocket_is_not_configured(): void
+    {
+        config(['services.shiprocket.email' => null, 'services.shiprocket.password' => null]);
+        Bus::fake([CreateShipment::class]);
+
+        OrderPaid::dispatch($this->order);
+
+        Bus::assertNotDispatched(CreateShipment::class);
+    }
+
     public function test_job_creates_shiprocket_order_and_assigns_awb(): void
     {
         $this->fakeShiprocket();
