@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import admin, auth, cart, catalog, orders, webhooks
+from app.core import observability
 from app.core.config import get_settings
 from app.core.errors import AppError, app_error_handler
 
@@ -30,6 +31,7 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
     app.add_exception_handler(AppError, app_error_handler)
+    observability.install(app)
 
     for module in (auth, catalog, cart, orders, admin):
         app.include_router(module.router, prefix="/api/v1")
