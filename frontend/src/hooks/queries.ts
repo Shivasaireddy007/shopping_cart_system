@@ -1,6 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { api, type Cart, type ProductCreate, unwrap } from '../api/client'
+import { api, type Cart, type ProductCreate, type ShippingAddress, unwrap } from '../api/client'
+import type { RazorpaySuccess } from '../lib/razorpay'
 import type { paths } from '../api/schema'
 import { useAuth } from '../stores/auth'
 
@@ -111,3 +112,65 @@ export function useArchiveProduct() {
     },
   })
 }
+
+export function useCheckout() {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (address: ShippingAddress) =>
+      unwrap(api.POST('/api/v1/checkout', { body: { shipping_address: address } })),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: ['cart'] })
+      void client.invalidateQueries({ queryKey: ['orders'] })
+    },
+  })
+}
+
+export function useOrders(page: number) {
+  return useQuery({
+    queryKey: ['orders', page],
+    queryFn: () => unwrap(api.GET('/api/v1/orders', { params: { query: { page } } })),
+    placeholderData: keepPreviousData,
+  })
+}
+
+export function useOrder(number: string) {
+  return useQuery({
+    queryKey: ['order', number],
+    queryFn: () => unwrap(api.GET('/api/v1/orders/{number}', { params: { path: { number } } })),
+  })
+}
+
+function useOrderMutation<TVars>(fn: (vars: TVars) => Promise<unknown>) {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: fn,
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: ['order'] })
+      void client.invalidateQueries({ queryKey: ['orders'] })
+    },
+  })
+}
+
+export const useVerifyPayment = () =>
+  useOrderMutation((vars: { number: string; result: RazorpaySuccess }) =>
+    unwrap(
+      api.POST('/api/v1/orders/{number}/verify-payment', {
+        params: { path: { number: vars.number } },
+        body: {
+          razorpay_payment_id: vars.result.razorpay_payment_id,
+          razorpay_signature: vars.result.razorpay_signature,
+        },
+      }),
+    ),
+  )
+
+export const useCancelOrder = () =>
+  useOrderMutation((number: string) =>
+    unwrap(api.POST('/api/v1/orders/{number}/cancel', { params: { path: { number } } })),
+  )
+
+export const useRetryPayment = () =>
+  useMutation({
+    mutationFn: (number: string) =>
+      unwrap(api.POST('/api/v1/orders/{number}/payment', { params: { path: { number } } })),
+  })
