@@ -22,12 +22,27 @@ CATEGORIES = [
     "Trousers", "Shorts", "Jackets", "Hoodies", "Track Pants", "Kurtas", "Watches", "Backpacks",
 ]  # fmt: skip
 BRANDS = ["Nike", "Adidas", "Puma", "Reebok", "Bata", "Woodland", "Campus", "Sparx"]
+MODEL_WORDS = [
+    "Air",
+    "Flex",
+    "Street",
+    "Urban",
+    "Trail",
+    "Classic",
+    "Swift",
+    "Cloud",
+    "Velocity",
+    "Core",
+    "Pro",
+    "Lite",
+]
+MODEL_SUFFIXES = ["", " 2", " 3", " Max", " Plus", " Elite", " Prime"]
 COLORS = ["black", "white", "red", "blue", "green", "grey"]
 SIZES = ["S", "M", "L", "XL"]
 
 DEMO_USERS = [
-    ("demo@shoppingcart.test", "Demo Customer", False),
-    ("admin@shoppingcart.test", "Demo Admin", True),
+    ("demo@example.com", "Demo Customer", False),
+    ("admin@example.com", "Demo Admin", True),
 ]
 DEMO_PASSWORD = "demo-password"
 
@@ -56,21 +71,29 @@ async def seed(product_count: int) -> None:
             print("Catalog already has products, skipping.")
         else:
             for _ in range(product_count):
-                name = fake.catch_phrase().title()
+                category = random.choice(categories)
+                brand = random.choice(BRANDS)
+                model = " ".join(random.sample(MODEL_WORDS, 2)) + random.choice(MODEL_SUFFIXES)
+                name = f"{brand} {model} {category.name}"
                 price = random.randint(199, 9999) * 100
+                color, size = random.choice(COLORS), random.choice(SIZES)
                 session.add(
                     Product(
-                        category_id=random.choice(categories).id,
-                        sku="SKU-" + fake.unique.bothify("??########").upper(),
+                        category_id=category.id,
+                        sku=f"{brand[:3].upper()}-{fake.unique.bothify('######')}",
                         name=name,
                         slug=unique_slug(name),
-                        description=fake.paragraph(),
-                        brand=random.choice(BRANDS),
+                        description=(
+                            f"{model} from {brand} in {color}. Built for everyday wear with a comfortable "
+                            f"fit and durable materials. Size {size}."
+                        ),
+                        brand=brand,
                         price=price,
-                        mrp=round(price * random.choice([1, 1.1, 1.25, 1.5])),
+                        # Whole rupees, never below the price.
+                        mrp=round(price * random.choice([1, 1.1, 1.25, 1.5]) / 100) * 100,
                         stock=random.choice([0, *range(1, 200)]),
                         weight_grams=random.randint(100, 2000),
-                        attributes={"color": random.choice(COLORS), "size": random.choice(SIZES)},
+                        attributes={"color": color, "size": size},
                     )
                 )
             print(f"Seeded {product_count} products.")
