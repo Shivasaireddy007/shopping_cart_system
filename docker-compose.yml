@@ -1,7 +1,8 @@
 # The whole stack on one machine:  docker compose up --build
 # Then seed demo data:              docker compose run --rm api python -m app.seed
 # and build the search index:       docker compose run --rm api python -m app.jobs.reindex
-# Shop at http://localhost:8080; API docs at http://localhost:8000/docs
+# Shop at http://localhost:8080; API docs at http://localhost:8000/docs;
+# traces at http://localhost:16686; metrics at http://localhost:8000/metrics
 
 x-app: &app
   build: ./backend
@@ -21,6 +22,7 @@ x-app: &app
     SHIPROCKET_PASSWORD: ${SHIPROCKET_PASSWORD:-}
     SHIPROCKET_WEBHOOK_TOKEN: ${SHIPROCKET_WEBHOOK_TOKEN:-}
     SHIPROCKET_BASE_URL: ${SHIPROCKET_BASE_URL:-https://apiv2.shiprocket.in/v1/external}
+    OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
   depends_on: &app-deps
     migrate:
       condition: service_completed_successfully
@@ -83,6 +85,13 @@ services:
       test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092"]
       interval: 10s
       retries: 30
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.62.0
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "16686:16686"
 
   migrate:
     <<: *app
