@@ -1,6 +1,7 @@
 import createClient, { type Middleware } from 'openapi-fetch'
 
 import { useAuth } from '../stores/auth'
+import { serverDuration, useRequestLog } from '../stores/requests'
 import type { components, paths } from './schema'
 
 export type Product = components['schemas']['ProductOut']
@@ -72,7 +73,32 @@ const auth: Middleware = {
   },
 }
 
-api.use(auth)
+const startedAt = new WeakMap<Request, number>()
+
+/** Records each call for the request inspector, minus the stats page's own polling. */
+const inspector: Middleware = {
+  onRequest({ request }) {
+    startedAt.set(request, performance.now())
+    return request
+  },
+  onResponse({ request, response }) {
+    const url = new URL(request.url)
+    if (url.pathname.startsWith('/api/v1/system/stats')) return response
+    const cache = response.headers.get('X-Cache')
+    useRequestLog.getState().add({
+      method: request.method,
+      path: url.pathname.replace('/api/v1', '') + url.search,
+      status: response.status,
+      ms: performance.now() - (startedAt.get(request) ?? performance.now()),
+      serverMs: serverDuration(response.headers.get('Server-Timing')),
+      cache: cache === 'HIT' || cache === 'MISS' ? cache : null,
+    })
+    return response
+  },
+}
+
+// Responses pass through middleware in reverse, so the inspector sees the final, post-refresh response.
+api.use(inspector, auth)
 
 /** Unwraps an openapi-fetch result, throwing ApiError on failure. */
 export async function unwrap<T>(promise: Promise<{ data?: T; error?: unknown; response: Response }>): Promise<T> {
