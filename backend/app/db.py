@@ -33,5 +33,8 @@ SessionLocal = async_sessionmaker(engine, expire_on_commit=False)
 
 
 async def get_session() -> AsyncIterator[AsyncSession]:
+    from app.services import product_changes  # imported here to avoid a cycle with the models
+
     async with SessionLocal() as session:
         yield session
+        await product_changes.publish(session)
