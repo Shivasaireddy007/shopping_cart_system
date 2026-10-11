@@ -16,6 +16,7 @@ from redis.asyncio import Redis
 from redis.exceptions import RedisError
 
 from app.core.config import get_settings
+from app.core.observability import CACHE_LOOKUPS
 
 log = logging.getLogger(__name__)
 
@@ -42,7 +43,9 @@ class CatalogCache:
             digest = hashlib.md5(json.dumps(filters, sort_keys=True, default=str).encode()).hexdigest()
             key = f"catalog:list:v{version}:{digest}"
             if (cached := await self.redis.get(key)) is not None:
+                CACHE_LOOKUPS.labels("listing", "hit").inc()
                 return str(cached)
+            CACHE_LOOKUPS.labels("listing", "miss").inc()
         except RedisError:
             log.warning("Redis unavailable, serving listing uncached", exc_info=True)
             return await build()
@@ -57,7 +60,9 @@ class CatalogCache:
             return await build()
         try:
             if (cached := await self.redis.get(_product_key(slug))) is not None:
+                CACHE_LOOKUPS.labels("product", "hit").inc()
                 return str(cached)
+            CACHE_LOOKUPS.labels("product", "miss").inc()
             hot = await self.redis.sismember(HOT_KEY, slug)
         except RedisError:
             log.warning("Redis unavailable, serving product uncached", exc_info=True)

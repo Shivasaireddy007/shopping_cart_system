@@ -9,6 +9,7 @@ from sqlalchemy.orm import selectinload
 
 from app.core.config import get_settings
 from app.core.errors import AppError, BadGateway, InsufficientStock, NotFound
+from app.core.observability import CHECKOUTS
 from app.events.outbox import ORDERS_TOPIC, add_event
 from app.models import Cart, CartItem, Order, OrderItem, OrderStatus, Product
 from app.services.razorpay import RazorpayClient, RazorpayError
@@ -50,7 +51,11 @@ async def checkout(
     if cart is None or not cart.items:
         raise EmptyCart("Your cart is empty.")
 
-    order = await _reserve(session, user_id, cart.items, address)
+    try:
+        order = await _reserve(session, user_id, cart.items, address)
+    except InsufficientStock:
+        CHECKOUTS.labels("out_of_stock").inc()
+        raise
     await session.commit()
 
     try:
@@ -58,12 +63,14 @@ async def checkout(
     except RazorpayError:
         log.exception("Razorpay order creation failed for %s", order.number)
         await cancel(session, order.id)
+        CHECKOUTS.labels("gateway_error").inc()
         raise BadGateway("Payment provider is unavailable, please try again.") from None
 
     order.razorpay_order_id = razorpay_order_id
     for item in cart.items:
         await session.delete(item)
     await session.commit()
+    CHECKOUTS.labels("created").inc()
     return await load_order(session, order.id)
 
 
