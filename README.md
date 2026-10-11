@@ -3,14 +3,18 @@
 [![ci](https://github.com/Shivasaireddy007/shopping_cart_system/actions/workflows/ci.yml/badge.svg)](https://github.com/Shivasaireddy007/shopping_cart_system/actions/workflows/ci.yml)
 
 A full-stack e-commerce app: a **React + TypeScript** storefront and admin panel on a
-**FastAPI** backend with **PostgreSQL**. Prices are in rupees, with Razorpay payments and
-Shiprocket shipping on the roadmap.
+**FastAPI** backend with **PostgreSQL**, with Razorpay payments. Prices are in rupees;
+Shiprocket shipping, search and caching are on the roadmap.
 
 ![Catalog filtered to running shoes, sorted by price](docs/images/catalog.png)
 
 | Product page | Cart |
 |---|---|
 | ![Product page with price, MRP and discount](docs/images/product.png) | ![Cart with live totals and free shipping](docs/images/cart.png) |
+
+| Checkout | Order confirmation |
+|---|---|
+| ![Delivery address form with order summary](docs/images/checkout.png) | ![Paid order with items, payment and address](docs/images/order-confirmation.png) |
 
 | Admin: products | Admin: edit product |
 |---|---|
@@ -23,8 +27,8 @@ The project is built in stages. Each stage is complete and tested before the nex
 | Stage | Scope | Status |
 |---|---|---|
 | 1 | Catalog, cart, JWT auth, admin products, React storefront and admin, CI | ✅ Done |
-| 2 | Checkout with row-locked stock reservation, Razorpay payments and signed webhooks | Next |
-| 3 | Redis caching for hot products, OpenSearch faceted search | Planned |
+| 2 | Checkout with row-locked stock reservation, Razorpay payments and signed webhooks | ✅ Done |
+| 3 | Redis caching for hot products, OpenSearch faceted search | Next |
 | 4 | Kafka order events with the transactional outbox pattern, Shiprocket shipping | Planned |
 | 5 | Docker and Kubernetes (Helm), observability, k6 load tests, live demo | Planned |
 
@@ -37,9 +41,27 @@ The project is built in stages. Each stage is complete and tested before the nex
 | Database | PostgreSQL 17 |
 | Auth | JWT access and refresh tokens, Argon2 password hashing, admin role |
 | Quality | pytest, Vitest + Testing Library, ruff, mypy (strict), oxlint, GitHub Actions |
-| Planned | Redis, OpenSearch, Kafka, Razorpay, Shiprocket, Docker, Kubernetes, Playwright, k6 |
+| Payments | Razorpay Orders API, Razorpay Checkout, HMAC-signed webhooks |
+| Planned | Redis, OpenSearch, Kafka, Shiprocket, Docker, Kubernetes, Playwright, k6 |
 
 ## Design decisions
+
+- **No overselling, proven.** Checkout locks the product rows (`SELECT … FOR UPDATE`, in id order so
+  concurrent checkouts can't deadlock) before reserving stock. A test runs ten checkouts at the same
+  moment on separate database connections for three units: exactly three succeed. With the lock removed,
+  all ten "succeed" and the stock is oversold
+  ([`tests/test_concurrency.py`](backend/tests/test_concurrency.py)).
+- **No locks held during network calls.** The stock reservation commits before Razorpay is called. If
+  Razorpay fails, the order is cancelled, the stock goes back and the cart is kept.
+- **Payments recorded exactly once.** The checkout callback and Razorpay's webhook can both report a
+  payment, and webhooks can repeat or arrive out of order. Payment ids are unique, a late "failed" never
+  downgrades a captured payment, and amounts are checked against the order total.
+- **Webhooks are atomic.** Each webhook's event id is inserted with `ON CONFLICT DO NOTHING` in the same
+  transaction as its effect: a repeat is detected even under concurrency, and if handling fails, nothing
+  commits and Razorpay's retry is processed. Signatures are HMAC-SHA256 over the raw body, compared in
+  constant time.
+- **Abandoned checkouts release stock.** Unpaid orders are cancelled after 30 minutes by a job
+  (`python -m app.jobs.expire_orders`), which returns their stock.
 
 - **End-to-end types.** The backend's OpenAPI spec ([`docs/openapi.json`](docs/openapi.json)) generates
   the frontend's API types. If a backend field changes, the frontend stops compiling, and CI fails if
@@ -72,6 +94,12 @@ The project is built in stages. Each stage is complete and tested before the nex
 | GET / POST | `/api/v1/admin/products` | Admin | List all products (incl. archived), create |
 | PATCH / DELETE | `/api/v1/admin/products/{id}` | Admin | Update price, stock or details; archive |
 | POST / DELETE | `/api/v1/admin/categories[/{id}]` | Admin | Manage categories |
+| POST | `/api/v1/checkout` | JWT | Reserve stock, create the order and a Razorpay order |
+| GET | `/api/v1/orders`, `/api/v1/orders/{number}` | JWT | Order history and details |
+| POST | `/api/v1/orders/{number}/verify-payment` | JWT | Confirm payment with Razorpay's signature |
+| POST | `/api/v1/orders/{number}/payment` | JWT | Get Razorpay details again to pay later |
+| POST | `/api/v1/orders/{number}/cancel` | JWT | Cancel an unpaid order and release its stock |
+| POST | `/api/webhooks/razorpay` | Signature | Payment captured or failed |
 
 With the backend running, interactive docs are at [`/docs`](http://127.0.0.1:8000/docs).
 
@@ -88,6 +116,10 @@ uv run alembic upgrade head
 uv run python -m app.seed --products 1000
 uv run uvicorn app.main:app --reload
 ```
+
+For payments, create Razorpay **test mode** keys and set `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`
+and `RAZORPAY_WEBHOOK_SECRET` in `backend/.env`. Pay with Razorpay's
+[test cards or UPI IDs](https://razorpay.com/docs/payments/payments/test-card-details/).
 
 ```bash
 # Frontend: http://localhost:5173 (proxies /api to the backend)
@@ -116,17 +148,17 @@ cd frontend && npm run api:types
 
 Design mockups for the stages still to come. They'll be replaced with screenshots once built.
 
-| Faceted search (stage 3) | Razorpay checkout (stage 2) |
+| Faceted search (stage 3) | Admin shipments (stage 4) |
 |---|---|
-| ![Search with brand, colour, price and size facets](docs/images/planned-search-facets.png) | ![Razorpay payment window](docs/images/planned-checkout-razorpay.png) |
+| ![Search with brand, colour, price and size facets](docs/images/planned-search-facets.png) | ![Shipments with courier status](docs/images/planned-admin-shipments.png) |
 
 | Order tracking (stage 4) | Admin dashboard |
 |---|---|
 | ![Shiprocket tracking timeline](docs/images/planned-order-tracking.png) | ![Orders, revenue, low stock and hot products](docs/images/planned-admin-dashboard.png) |
 
-| Admin orders | Admin shipments |
+| Admin orders | |
 |---|---|
-| ![Orders with payment and shipment status](docs/images/planned-admin-orders.png) | ![Shipments with courier status](docs/images/planned-admin-shipments.png) |
+| ![Orders with payment and shipment status](docs/images/planned-admin-orders.png) | |
 
 ## License
 
