@@ -3,14 +3,18 @@
 [![ci](https://github.com/Shivasaireddy007/shopping_cart_system/actions/workflows/ci.yml/badge.svg)](https://github.com/Shivasaireddy007/shopping_cart_system/actions/workflows/ci.yml)
 
 A full-stack e-commerce app: a **React + TypeScript** storefront and admin panel on a
-**FastAPI** backend with **PostgreSQL**, with Razorpay payments. Prices are in rupees;
-Shiprocket shipping, search and caching are on the roadmap.
+**FastAPI** backend with **PostgreSQL**: Razorpay payments, OpenSearch faceted search and Redis
+caching. Prices are in rupees; Shiprocket shipping is on the roadmap.
 
-![Catalog filtered to running shoes, sorted by price](docs/images/catalog.png)
+![Search for "runing shoes" (typo) with the Nike facet ticked; other brands keep their counts](docs/images/search.png)
 
-| Product page | Cart |
+| Catalog | Product page |
 |---|---|
-| ![Product page with price, MRP and discount](docs/images/product.png) | ![Cart with live totals and free shipping](docs/images/cart.png) |
+| ![Catalog filtered to running shoes, sorted by price](docs/images/catalog.png) | ![Product page with price, MRP and discount](docs/images/product.png) |
+
+| Cart | Order history |
+|---|---|
+| ![Cart with live totals and free shipping](docs/images/cart.png) | ![Order history](docs/images/orders.png) |
 
 | Checkout | Order confirmation |
 |---|---|
@@ -28,8 +32,8 @@ The project is built in stages. Each stage is complete and tested before the nex
 |---|---|---|
 | 1 | Catalog, cart, JWT auth, admin products, React storefront and admin, CI | ✅ Done |
 | 2 | Checkout with row-locked stock reservation, Razorpay payments and signed webhooks | ✅ Done |
-| 3 | Redis caching for hot products, OpenSearch faceted search | Next |
-| 4 | Kafka order events with the transactional outbox pattern, Shiprocket shipping | Planned |
+| 3 | Redis caching for hot products, OpenSearch faceted search | ✅ Done |
+| 4 | Kafka order events with the transactional outbox pattern, Shiprocket shipping | Next |
 | 5 | Docker and Kubernetes (Helm), observability, k6 load tests, live demo | Planned |
 
 ## Tech stack
@@ -42,7 +46,8 @@ The project is built in stages. Each stage is complete and tested before the nex
 | Auth | JWT access and refresh tokens, Argon2 password hashing, admin role |
 | Quality | pytest, Vitest + Testing Library, ruff, mypy (strict), oxlint, GitHub Actions |
 | Payments | Razorpay Orders API, Razorpay Checkout, HMAC-signed webhooks |
-| Planned | Redis, OpenSearch, Kafka, Shiprocket, Docker, Kubernetes, Playwright, k6 |
+| Search and cache | OpenSearch 3, Redis |
+| Planned | Kafka, Shiprocket, Docker, Kubernetes, Playwright, k6 |
 
 ## Design decisions
 
@@ -60,6 +65,19 @@ The project is built in stages. Each stage is complete and tested before the nex
   transaction as its effect: a repeat is detected even under concurrency, and if handling fails, nothing
   commits and Razorpay's retry is processed. Signatures are HMAC-SHA256 over the raw body, compared in
   constant time.
+- **Faceted search that behaves like a real shop.** Facet selections go into OpenSearch's `post_filter`
+  and each facet's aggregation applies every selection except its own, so ticking Nike still shows how
+  many Puma products match. Text search is fuzzy ("runing shose" finds running shoes). If OpenSearch is
+  down, search falls back to PostgreSQL and the UI says filters are limited.
+- **Zero-downtime reindexing.** `products` is an alias; a rebuild fills a new versioned index and swaps the
+  alias in one atomic call, deleting a half-built index if anything fails. An integration test runs the
+  real mapping and queries against OpenSearch in CI.
+- **Caches that can't go stale silently.** A SQLAlchemy session hook records every product change; only
+  changes that actually commit invalidate the Redis cache and re-index the product, so a checkout that
+  rolls back touches neither. Listing keys embed a catalog version, so one change retires every cached
+  listing without scanning keys. If Redis is down, pages are served uncached.
+- **Hot products stay warm.** Product views are counted in hourly Redis sorted sets; a job caches the top
+  100 of the last 24 hours with a longer TTL.
 - **Abandoned checkouts release stock.** Unpaid orders are cancelled after 30 minutes by a job
   (`python -m app.jobs.expire_orders`), which returns their stock.
 
@@ -88,7 +106,8 @@ The project is built in stages. Each stage is complete and tested before the nex
 | GET | `/api/v1/auth/me` | JWT | Current user |
 | GET | `/api/v1/categories` | – | Category list |
 | GET | `/api/v1/products` | – | Filter by category, brand, price and stock; sort; paginate |
-| GET | `/api/v1/products/{slug}` | – | Product details |
+| GET | `/api/v1/products/{slug}` | – | Product details (cached; counts a view) |
+| GET | `/api/v1/search` | – | Fuzzy full-text search with brand, category, colour, size and price facets |
 | GET / DELETE | `/api/v1/cart` | JWT | View or empty the cart |
 | POST / PATCH / DELETE | `/api/v1/cart/items[/{id}]` | JWT | Add (stock checked, `409` if short), change quantity, remove |
 | GET / POST | `/api/v1/admin/products` | Admin | List all products (incl. archived), create |
@@ -105,7 +124,8 @@ With the backend running, interactive docs are at [`/docs`](http://127.0.0.1:800
 
 ## Running locally
 
-You need Python 3.12 with [uv](https://docs.astral.sh/uv/), Node.js 22+ and PostgreSQL.
+You need Python 3.12 with [uv](https://docs.astral.sh/uv/), Node.js 22+, PostgreSQL, Redis and
+OpenSearch (`SEARCH_URL`, default `http://127.0.0.1:9200`).
 
 ```bash
 # Backend: http://127.0.0.1:8000
@@ -114,6 +134,7 @@ uv sync
 createdb shop
 uv run alembic upgrade head
 uv run python -m app.seed --products 1000
+uv run python -m app.jobs.reindex        # needs OpenSearch; search falls back to PostgreSQL without it
 uv run uvicorn app.main:app --reload
 ```
 
@@ -148,17 +169,13 @@ cd frontend && npm run api:types
 
 Design mockups for the stages still to come. They'll be replaced with screenshots once built.
 
-| Faceted search (stage 3) | Admin shipments (stage 4) |
+| Admin shipments (stage 4) | Order tracking (stage 4) |
 |---|---|
-| ![Search with brand, colour, price and size facets](docs/images/planned-search-facets.png) | ![Shipments with courier status](docs/images/planned-admin-shipments.png) |
+| ![Shipments with courier status](docs/images/planned-admin-shipments.png) | ![Shiprocket tracking timeline](docs/images/planned-order-tracking.png) |
 
-| Order tracking (stage 4) | Admin dashboard |
+| Admin dashboard | Admin orders |
 |---|---|
-| ![Shiprocket tracking timeline](docs/images/planned-order-tracking.png) | ![Orders, revenue, low stock and hot products](docs/images/planned-admin-dashboard.png) |
-
-| Admin orders | |
-|---|---|
-| ![Orders with payment and shipment status](docs/images/planned-admin-orders.png) | |
+| ![Orders, revenue, low stock and hot products](docs/images/planned-admin-dashboard.png) | ![Orders with payment and shipment status](docs/images/planned-admin-orders.png) |
 
 ## License
 
