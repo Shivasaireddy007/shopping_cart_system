@@ -7,6 +7,7 @@ from collections.abc import AsyncIterator
 from typing import Any
 
 os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://postgres@127.0.0.1:5432/shop_test")
+os.environ.setdefault("REDIS_URL", "redis://127.0.0.1:6379/15")
 
 import httpx
 import pytest
@@ -14,12 +15,17 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession, create_async_engine
 
 import app.models
+from app.api.routes.catalog import get_catalog_cache
 from app.core.config import get_settings
+from app.core.redis import get_redis
 from app.core.security import create_token, hash_password
 from app.db import Base, get_session
 from app.main import app
 from app.models import Cart, CartItem, Category, Product, User
+from app.services import product_changes
+from app.services.cache import CatalogCache
 from app.services.razorpay import RazorpayClient, get_razorpay
+from app.services.search.client import SearchClient, get_search_client
 
 _PASSWORD_HASH = hash_password("password123")
 
@@ -88,13 +94,62 @@ def razorpay() -> FakeRazorpay:
     return FakeRazorpay()
 
 
+class FakeSearch:
+    """OpenSearch on an in-memory transport. Records requests; replies with `next_search`."""
+
+    def __init__(self) -> None:
+        self.requests: list[tuple[str, str, Any]] = []
+        self.down = False
+        self.next_search: dict[str, Any] = {"hits": {"total": {"value": 0}, "hits": []}, "aggregations": {}}
+        self.client = SearchClient("http://search.test", transport=httpx.MockTransport(self._handle))
+
+    def _handle(self, request: httpx.Request) -> httpx.Response:
+        if self.down:
+            raise httpx.ConnectError("Connection refused")
+        body: Any = None
+        if request.content:
+            text = request.content.decode()
+            body = (
+                [json.loads(line) for line in text.splitlines()]
+                if request.url.path == "/_bulk"
+                else json.loads(text)
+            )
+        self.requests.append((request.method, request.url.path, body))
+        if request.url.path.endswith("/_search"):
+            return httpx.Response(200, json=self.next_search)
+        if request.url.path == "/_bulk":
+            return httpx.Response(200, json={"errors": False, "items": []})
+        return httpx.Response(200, json={"acknowledged": True})
+
+    def bulk_bodies(self) -> list[Any]:
+        return [body for method, path, body in self.requests if path == "/_bulk"]
+
+
 @pytest.fixture
-async def client(session: AsyncSession, razorpay: FakeRazorpay) -> AsyncIterator[AsyncClient]:
+def search() -> FakeSearch:
+    return FakeSearch()
+
+
+@pytest.fixture
+async def cache() -> AsyncIterator[CatalogCache]:
+    """The catalog cache on Redis database 15, emptied before each test."""
+    redis = get_redis()
+    await redis.flushdb()
+    yield CatalogCache(redis)
+
+
+@pytest.fixture
+async def client(
+    session: AsyncSession, razorpay: FakeRazorpay, search: FakeSearch, cache: CatalogCache
+) -> AsyncIterator[AsyncClient]:
     async def override() -> AsyncIterator[AsyncSession]:
         yield session
+        await product_changes.publish(session, cache, search.client)
 
     app.dependency_overrides[get_session] = override
     app.dependency_overrides[get_razorpay] = lambda: razorpay.client
+    app.dependency_overrides[get_search_client] = lambda: search.client
+    app.dependency_overrides[get_catalog_cache] = lambda: cache
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as http:
         yield http
     app.dependency_overrides.clear()
