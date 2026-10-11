@@ -4,6 +4,7 @@ import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useCart, useMe } from '../hooks/queries'
 import { useAuth } from '../stores/auth'
 import { Logo } from './Logo'
+import { SearchBox } from './SearchBox'
 
 export function Layout() {
   const { data: me } = useMe()
@@ -29,6 +30,7 @@ export function Layout() {
           <Link to="/" aria-label="Shopping Cart home">
             <Logo />
           </Link>
+          <SearchBox />
           <nav className="ml-auto flex items-center gap-5 text-sm">
             {me?.is_admin ? (
               <NavLink to="/admin" className={linkClass}>
