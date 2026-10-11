@@ -60,7 +60,7 @@ export function ProductForm() {
   if (editing && !existing) {
     return (
       <p className="rounded-lg bg-surface p-6">
-        Open products from the <Link to="/admin" className="font-semibold text-brand">products list</Link> to edit them.
+        Open products from the <Link to="/admin/products" className="font-semibold text-brand">products list</Link> to edit them.
       </p>
     )
   }
@@ -81,7 +81,7 @@ export function ProductForm() {
           attributes: { color: v.color || null, size: v.size || null },
         },
       })
-      navigate('/admin')
+      navigate('/admin/products')
     } catch (error) {
       form.setError('root', { message: error instanceof Error ? error.message : 'Could not save' })
     }
@@ -133,7 +133,7 @@ export function ProductForm() {
         <button type="submit" disabled={form.formState.isSubmitting} className="rounded-lg bg-brand px-5 py-2.5 font-semibold text-white hover:bg-brand-dark disabled:opacity-60">
           {form.formState.isSubmitting ? 'Saving…' : editing ? 'Save changes' : 'Create product'}
         </button>
-        <Link to="/admin" className="rounded-lg border border-line px-5 py-2.5 font-semibold">Cancel</Link>
+        <Link to="/admin/products" className="rounded-lg border border-line px-5 py-2.5 font-semibold">Cancel</Link>
       </div>
     </form>
   )

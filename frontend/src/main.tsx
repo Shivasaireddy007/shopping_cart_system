@@ -6,6 +6,7 @@ import { createRoot } from 'react-dom/client'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 
 import { Layout } from './components/Layout'
+import { AdminDashboard } from './pages/admin/AdminDashboard'
 import { AdminLayout } from './pages/admin/AdminLayout'
 import { AdminOrders } from './pages/admin/AdminOrders'
 import { AdminProducts } from './pages/admin/AdminProducts'
@@ -46,7 +47,8 @@ const router = createBrowserRouter([
           {
             element: <AdminLayout />,
             children: [
-              { index: true, element: <AdminProducts /> },
+              { index: true, element: <AdminDashboard /> },
+              { path: 'products', element: <AdminProducts /> },
               { path: 'orders', element: <AdminOrders /> },
               { path: 'shipments', element: <AdminShipments /> },
             ],

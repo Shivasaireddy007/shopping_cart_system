@@ -506,6 +506,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Dashboard
+         * @description Today's orders and revenue, what needs shipping, 7-day revenue, low stock and hot products.
+         */
+        get: operations["get_dashboard_api_v1_admin_dashboard_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/webhooks/razorpay": {
         parameters: {
             query?: never;
@@ -684,6 +704,47 @@ export interface components {
             order: components["schemas"]["OrderOut"];
             razorpay: components["schemas"]["RazorpayCheckout"];
         };
+        /** DashboardOut */
+        DashboardOut: {
+            /** Orders Today */
+            orders_today: number;
+            /** Revenue Today */
+            revenue_today: number;
+            /**
+             * To Ship
+             * @description Paid orders not yet shipped
+             */
+            to_ship: number;
+            /** Failed Payments Today */
+            failed_payments_today: number;
+            /**
+             * Revenue By Day
+             * @description Last 7 days, oldest first
+             */
+            revenue_by_day: components["schemas"]["DayRevenue"][];
+            /** Low Stock */
+            low_stock: components["schemas"]["StockAlert"][];
+            /**
+             * Hot Products
+             * @description Most viewed in the last 24 hours
+             */
+            hot_products: components["schemas"]["HotProduct"][];
+        };
+        /** DayRevenue */
+        DayRevenue: {
+            /**
+             * Date
+             * @description YYYY-MM-DD in India time
+             */
+            date: string;
+            /**
+             * Revenue
+             * @description Paid order totals in paise
+             */
+            revenue: number;
+            /** Orders */
+            orders: number;
+        };
         /** Facet */
         Facet: {
             /** Value */
@@ -695,6 +756,15 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** HotProduct */
+        HotProduct: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /** Views */
+            views: number;
         };
         /** LoginIn */
         LoginIn: {
@@ -987,6 +1057,17 @@ export interface components {
              * @description 6-digit PIN code
              */
             pincode: string;
+        };
+        /** StockAlert */
+        StockAlert: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /** Sku */
+            sku: string;
+            /** Stock */
+            stock: number;
         };
         /** TokenPair */
         TokenPair: {
@@ -1933,6 +2014,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_dashboard_api_v1_admin_dashboard_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardOut"];
                 };
             };
         };
