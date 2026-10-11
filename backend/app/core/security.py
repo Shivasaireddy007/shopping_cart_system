@@ -4,7 +4,7 @@ from typing import Literal
 
 import jwt
 from argon2 import PasswordHasher
-from argon2.exceptions import VerifyMismatchError
+from argon2.exceptions import InvalidHashError, VerificationError
 
 from app.core.config import get_settings
 
@@ -20,7 +20,7 @@ def hash_password(password: str) -> str:
 def verify_password(password_hash: str, password: str) -> bool:
     try:
         return _hasher.verify(password_hash, password)
-    except VerifyMismatchError:
+    except (VerificationError, InvalidHashError):  # wrong password, or an account that can't sign in
         return False
 
 
