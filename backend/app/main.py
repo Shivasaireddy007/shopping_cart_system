@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import admin, auth, cart, catalog
+from app.api.routes import admin, auth, cart, catalog, orders, webhooks
 from app.core.config import get_settings
 from app.core.errors import AppError, app_error_handler
 
@@ -31,8 +31,9 @@ def create_app() -> FastAPI:
     )
     app.add_exception_handler(AppError, app_error_handler)
 
-    for module in (auth, catalog, cart, admin):
+    for module in (auth, catalog, cart, orders, admin):
         app.include_router(module.router, prefix="/api/v1")
+    app.include_router(webhooks.router, prefix="/api")
 
     @app.get("/health", tags=["Health"])
     async def health() -> dict[str, str]:
