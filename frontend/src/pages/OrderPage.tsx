@@ -1,6 +1,7 @@
 import { Link, useParams } from 'react-router-dom'
 
 import { OrderStatus } from '../components/OrderStatus'
+import { Tracking } from '../components/Tracking'
 import { useCancelOrder, useOrder, useRetryPayment } from '../hooks/queries'
 import { usePayOrder } from '../hooks/usePayOrder'
 import { formatPaise } from '../lib/money'
@@ -75,6 +76,7 @@ export function OrderPage() {
       </section>
 
       <aside className="grid content-start gap-4">
+        <Tracking number={order.number} status={order.status} />
         <div className="grid gap-2 rounded-xl bg-surface p-5 tabular">
           <h2 className="text-lg font-bold">Payment</h2>
           <div className="flex justify-between"><span>Subtotal</span><span>{formatPaise(order.subtotal)}</span></div>

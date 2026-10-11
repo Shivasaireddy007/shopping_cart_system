@@ -183,3 +183,28 @@ export const useRetryPayment = () =>
     mutationFn: (number: string) =>
       unwrap(api.POST('/api/v1/orders/{number}/payment', { params: { path: { number } } })),
   })
+
+export function useTracking(number: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ['tracking', number],
+    queryFn: () => unwrap(api.GET('/api/v1/orders/{number}/tracking', { params: { path: { number } } })),
+    enabled,
+  })
+}
+
+export function useAdminOrders(status: string, page: number) {
+  return useQuery({
+    queryKey: ['admin-orders', status, page],
+    queryFn: () =>
+      unwrap(api.GET('/api/v1/admin/orders', { params: { query: { status: status || undefined, page } } })),
+    placeholderData: keepPreviousData,
+  })
+}
+
+export function useAdminShipments(page: number) {
+  return useQuery({
+    queryKey: ['admin-shipments', page],
+    queryFn: () => unwrap(api.GET('/api/v1/admin/shipments', { params: { query: { page } } })),
+    placeholderData: keepPreviousData,
+  })
+}
