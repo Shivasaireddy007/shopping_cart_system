@@ -22,6 +22,7 @@ import { OrderPage } from './pages/OrderPage'
 import { OrdersPage } from './pages/OrdersPage'
 import { ProductPage } from './pages/ProductPage'
 import { SearchPage } from './pages/SearchPage'
+import { HowItsBuilt } from './pages/how/HowItsBuilt'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, refetchOnWindowFocus: false } },
@@ -34,6 +35,7 @@ const router = createBrowserRouter([
       { path: '/', element: <Catalog /> },
       { path: '/p/:slug', element: <ProductPage /> },
       { path: '/search', element: <SearchPage /> },
+      { path: '/how-it-works', element: <HowItsBuilt /> },
       { path: '/cart', element: <CartPage /> },
       { path: '/checkout', element: <CheckoutPage /> },
       { path: '/orders', element: <OrdersPage /> },

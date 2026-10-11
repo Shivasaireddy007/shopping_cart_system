@@ -216,3 +216,18 @@ export function useDashboard() {
     refetchInterval: 60_000,
   })
 }
+
+export function useSystemStats() {
+  return useQuery({
+    queryKey: ['system-stats'],
+    queryFn: () => unwrap(api.GET('/api/v1/system/stats')),
+    refetchInterval: 5_000,
+  })
+}
+
+export function useOversellExperiment() {
+  return useMutation({
+    mutationFn: (locked: boolean) =>
+      unwrap(api.POST('/api/v1/system/oversell-experiment', { params: { query: { locked } } })),
+  })
+}
