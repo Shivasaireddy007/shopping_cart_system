@@ -1,0 +1,43 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-board: #e9ecf2;
+  --color-surface: #ffffff;
+  --color-surface-2: #f4f6fa;
+  --color-ink: #171b26;
+  --color-muted: #5a6273;
+  --color-line: #d7dce5;
+  --color-brand: #22307a;
+  --color-brand-dark: #1a2560;
+  --color-accent: #c97f00;
+  --color-accent-soft: #fcefd3;
+  --color-good: #17784c;
+  --color-good-soft: #ddf3e8;
+  --color-warn: #9a5b00;
+  --color-warn-soft: #fdebcc;
+  --color-crit: #b42626;
+  --color-crit-soft: #fbe1e1;
+
+  --font-display: 'Bricolage Grotesque', 'Avenir Next', 'Segoe UI', system-ui, sans-serif;
+  --font-sans: 'Figtree', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+}
+
+@layer base {
+  body {
+    @apply bg-board font-sans text-ink antialiased;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-display;
+    text-wrap: balance;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-accent;
+  }
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
