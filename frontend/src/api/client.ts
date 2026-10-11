@@ -8,6 +8,9 @@ export type Category = components['schemas']['CategoryOut']
 export type Cart = components['schemas']['CartOut']
 export type User = components['schemas']['UserOut']
 export type ProductCreate = components['schemas']['ProductCreate']
+export type Order = components['schemas']['OrderOut']
+export type ShippingAddress = components['schemas']['ShippingAddress']
+export type RazorpayCheckout = components['schemas']['RazorpayCheckout']
 
 const baseUrl = import.meta.env.VITE_API_URL ?? ''
 

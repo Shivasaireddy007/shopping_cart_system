@@ -212,6 +212,129 @@ export interface paths {
         patch: operations["update_item_api_v1_cart_items__item_id__patch"];
         trace?: never;
     };
+    "/api/v1/checkout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Checkout
+         * @description Place an order from the cart and get the details to open Razorpay Checkout.
+         *
+         *     Returns `409` if stock ran out and `502` if Razorpay is unavailable (the order is
+         *     cancelled and the cart kept).
+         */
+        post: operations["checkout_api_v1_checkout_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Orders
+         * @description List your orders, newest first.
+         */
+        get: operations["list_orders_api_v1_orders_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/orders/{number}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Order
+         * @description Get one of your orders.
+         */
+        get: operations["get_order_api_v1_orders__number__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/orders/{number}/payment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Retry Payment
+         * @description Get the Razorpay details again to pay an unpaid order, e.g. after closing the payment window.
+         */
+        post: operations["retry_payment_api_v1_orders__number__payment_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/orders/{number}/verify-payment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Verify Payment
+         * @description Confirm a payment with the signature Razorpay Checkout returned. `422` if the signature is wrong.
+         */
+        post: operations["verify_payment_api_v1_orders__number__verify_payment_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/orders/{number}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancel Order
+         * @description Cancel an unpaid order and release its stock. `409` once it is paid.
+         */
+        post: operations["cancel_order_api_v1_orders__number__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/products": {
         parameters: {
             query?: never;
@@ -295,6 +418,29 @@ export interface paths {
          * @description Delete an empty category. 409 if it still has products.
          */
         delete: operations["delete_category_api_v1_admin_categories__category_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/webhooks/razorpay": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Razorpay Webhook
+         * @description Receive Razorpay payment events, verified with the HMAC signature of the raw body.
+         *
+         *     The event is recorded in the same transaction as its effect, so either both commit or
+         *     neither does and Razorpay's retry is processed. Repeated deliveries return `duplicate`.
+         */
+        post: operations["razorpay_webhook_api_webhooks_razorpay_post"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -386,6 +532,15 @@ export interface components {
             /** Parent Id */
             parent_id: number | null;
         };
+        /** CheckoutIn */
+        CheckoutIn: {
+            shipping_address: components["schemas"]["ShippingAddress"];
+        };
+        /** CheckoutOut */
+        CheckoutOut: {
+            order: components["schemas"]["OrderOut"];
+            razorpay: components["schemas"]["RazorpayCheckout"];
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -400,6 +555,57 @@ export interface components {
             email: string;
             /** Password */
             password: string;
+        };
+        /** OrderItemOut */
+        OrderItemOut: {
+            /** Sku */
+            sku: string;
+            /** Name */
+            name: string;
+            /** Unit Price */
+            unit_price: number;
+            /** Quantity */
+            quantity: number;
+            /** Line Total */
+            line_total: number;
+        };
+        /** OrderOut */
+        OrderOut: {
+            /** Number */
+            number: string;
+            /** Status */
+            status: string;
+            /** Subtotal */
+            subtotal: number;
+            /** Shipping Fee */
+            shipping_fee: number;
+            /** Total */
+            total: number;
+            /** Currency */
+            currency: string;
+            shipping_address: components["schemas"]["ShippingAddress"];
+            /** Items */
+            items: components["schemas"]["OrderItemOut"][];
+            /** Paid At */
+            paid_at: string | null;
+            /** Cancelled At */
+            cancelled_at: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** Page[OrderOut] */
+        Page_OrderOut_: {
+            /** Items */
+            items: components["schemas"]["OrderOut"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Per Page */
+            per_page: number;
         };
         /** Page[ProductOut] */
         Page_ProductOut_: {
@@ -525,6 +731,20 @@ export interface components {
             /** Is Active */
             is_active?: boolean | null;
         };
+        /**
+         * RazorpayCheckout
+         * @description Everything the frontend needs to open Razorpay Checkout.
+         */
+        RazorpayCheckout: {
+            /** Key Id */
+            key_id: string;
+            /** Order Id */
+            order_id: string;
+            /** Amount */
+            amount: number;
+            /** Currency */
+            currency: string;
+        };
         /** RefreshIn */
         RefreshIn: {
             /** Refresh Token */
@@ -541,6 +761,32 @@ export interface components {
             email: string;
             /** Password */
             password: string;
+        };
+        /** ShippingAddress */
+        ShippingAddress: {
+            /** Name */
+            name: string;
+            /**
+             * Phone
+             * @description 10-digit Indian mobile number
+             */
+            phone: string;
+            /** Line1 */
+            line1: string;
+            /** Line2 */
+            line2?: string | null;
+            /** City */
+            city: string;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "Andhra Pradesh" | "Arunachal Pradesh" | "Assam" | "Bihar" | "Chhattisgarh" | "Goa" | "Gujarat" | "Haryana" | "Himachal Pradesh" | "Jharkhand" | "Karnataka" | "Kerala" | "Madhya Pradesh" | "Maharashtra" | "Manipur" | "Meghalaya" | "Mizoram" | "Nagaland" | "Odisha" | "Punjab" | "Rajasthan" | "Sikkim" | "Tamil Nadu" | "Telangana" | "Tripura" | "Uttar Pradesh" | "Uttarakhand" | "West Bengal" | "Andaman and Nicobar Islands" | "Chandigarh" | "Dadra and Nagar Haveli and Daman and Diu" | "Delhi" | "Jammu and Kashmir" | "Ladakh" | "Lakshadweep" | "Puducherry";
+            /**
+             * Pincode
+             * @description 6-digit PIN code
+             */
+            pincode: string;
         };
         /** TokenPair */
         TokenPair: {
@@ -582,6 +828,13 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /** VerifyPaymentIn */
+        VerifyPaymentIn: {
+            /** Razorpay Payment Id */
+            razorpay_payment_id: string;
+            /** Razorpay Signature */
+            razorpay_signature: string;
         };
     };
     responses: never;
@@ -940,6 +1193,198 @@ export interface operations {
             };
         };
     };
+    checkout_api_v1_checkout_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CheckoutIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckoutOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_orders_api_v1_orders_get: {
+        parameters: {
+            query?: {
+                page?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_OrderOut_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_order_api_v1_orders__number__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                number: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    retry_payment_api_v1_orders__number__payment_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                number: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RazorpayCheckout"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    verify_payment_api_v1_orders__number__verify_payment_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                number: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerifyPaymentIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_order_api_v1_orders__number__cancel_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                number: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_products_api_v1_admin_products_get: {
         parameters: {
             query?: {
@@ -1121,6 +1566,40 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    razorpay_webhook_api_webhooks_razorpay_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-razorpay-signature"?: string;
+                "x-razorpay-event-id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
             };
             /** @description Validation Error */
             422: {
