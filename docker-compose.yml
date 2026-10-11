@@ -1,0 +1,130 @@
+# The whole stack on one machine:  docker compose up --build
+# Then seed demo data:              docker compose run --rm api python -m app.seed
+# and build the search index:       docker compose run --rm api python -m app.jobs.reindex
+# Shop at http://localhost:8080; API docs at http://localhost:8000/docs
+
+x-app: &app
+  build: ./backend
+  image: shopping-cart-api
+  environment: &app-env
+    DATABASE_URL: postgresql+asyncpg://shop:shop@postgres:5432/shop
+    REDIS_URL: redis://redis:6379/0
+    SEARCH_URL: http://opensearch:9200
+    KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    JWT_SECRET: ${JWT_SECRET:-local-development-secret-change-me-32b}
+    CORS_ORIGINS: '["http://localhost:8080"]'
+    RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-}
+    RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-}
+    RAZORPAY_WEBHOOK_SECRET: ${RAZORPAY_WEBHOOK_SECRET:-}
+    RAZORPAY_BASE_URL: ${RAZORPAY_BASE_URL:-https://api.razorpay.com/v1}
+    SHIPROCKET_EMAIL: ${SHIPROCKET_EMAIL:-}
+    SHIPROCKET_PASSWORD: ${SHIPROCKET_PASSWORD:-}
+    SHIPROCKET_WEBHOOK_TOKEN: ${SHIPROCKET_WEBHOOK_TOKEN:-}
+    SHIPROCKET_BASE_URL: ${SHIPROCKET_BASE_URL:-https://apiv2.shiprocket.in/v1/external}
+  depends_on: &app-deps
+    migrate:
+      condition: service_completed_successfully
+    redis:
+      condition: service_healthy
+    kafka:
+      condition: service_healthy
+  restart: unless-stopped
+
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: shop
+      POSTGRES_PASSWORD: shop
+      POSTGRES_DB: shop
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shop"]
+      interval: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 20
+
+  opensearch:
+    image: opensearchproject/opensearch:3.3.1
+    environment:
+      discovery.type: single-node
+      DISABLE_SECURITY_PLUGIN: "true"
+      DISABLE_INSTALL_DEMO_CONFIG: "true"
+      OPENSEARCH_JAVA_OPTS: -Xms512m -Xmx512m
+    volumes:
+      - opensearch:/usr/share/opensearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:9200/_cluster/health"]
+      interval: 10s
+      retries: 30
+
+  kafka:
+    image: apache/kafka:4.1.0
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092"]
+      interval: 10s
+      retries: 30
+
+  migrate:
+    <<: *app
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    <<: *app
+    ports:
+      - "8000:8000"
+    depends_on:
+      <<: *app-deps
+      opensearch:
+        condition: service_healthy
+
+  relay:
+    <<: *app
+    command: ["python", "-m", "app.events.relay"]
+
+  search-worker:
+    <<: *app
+    command: ["python", "-m", "app.events.handlers", "search"]
+    depends_on:
+      <<: *app-deps
+      opensearch:
+        condition: service_healthy
+
+  shipping-worker:
+    <<: *app
+    command: ["python", "-m", "app.events.handlers", "shipping"]
+
+  web:
+    build: ./frontend
+    ports:
+      - "8080:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  postgres:
+  opensearch:
