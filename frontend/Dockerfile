@@ -5,6 +5,9 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
+# Optional banner for the public demo; empty in normal builds.
+ARG VITE_DEMO_NOTICE=""
+ENV VITE_DEMO_NOTICE=$VITE_DEMO_NOTICE
 RUN npm run build
 
 # nginx serves the static build and proxies /api to the backend. The image fills

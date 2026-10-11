@@ -6,6 +6,9 @@ import { useAuth } from '../stores/auth'
 import { Logo } from './Logo'
 import { SearchBox } from './SearchBox'
 
+// Set at build time for the public demo (VITE_DEMO_NOTICE), e.g. test card details.
+const DEMO_NOTICE = import.meta.env.VITE_DEMO_NOTICE as string | undefined
+
 export function Layout() {
   const { data: me } = useMe()
   const { data: cart } = useCart()
@@ -25,6 +28,7 @@ export function Layout() {
 
   return (
     <div className="min-h-screen">
+      {DEMO_NOTICE ? <p className="bg-brand px-4 py-1.5 text-center text-xs text-white">{DEMO_NOTICE}</p> : null}
       <header className="sticky top-0 z-10 border-b border-line bg-surface/95 backdrop-blur">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
           <Link to="/" aria-label="Shopping Cart home">
