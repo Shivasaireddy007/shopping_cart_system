@@ -1671,6 +1671,7 @@
           "Health"
         ],
         "summary": "Health",
+        "description": "Liveness: the process is up.",
         "operationId": "health_health_get",
         "responses": {
           "200": {
@@ -1686,6 +1687,29 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/ready": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Ready",
+        "description": "Readiness: PostgreSQL and Redis answer, so this instance can take traffic.",
+        "operationId": "ready_ready_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "503": {
+            "description": "A dependency is down"
           }
         }
       }
