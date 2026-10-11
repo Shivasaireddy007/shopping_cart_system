@@ -14,7 +14,8 @@ export type RazorpayCheckout = components['schemas']['RazorpayCheckout']
 
 const baseUrl = import.meta.env.VITE_API_URL ?? ''
 
-export const api = createClient<paths>({ baseUrl })
+// Look fetch up on each call (instead of once at startup) so tests and polyfills can replace it.
+export const api = createClient<paths>({ baseUrl, fetch: (request) => globalThis.fetch(request) })
 
 /** Errors from the API carry the HTTP status and the server's message. */
 export class ApiError extends Error {

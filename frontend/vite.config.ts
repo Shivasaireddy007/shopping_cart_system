@@ -11,5 +11,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
+    // Node can't build requests from relative URLs, so tests use an absolute API address.
+    env: { VITE_API_URL: 'http://localhost' },
   },
 })
