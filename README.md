@@ -20,17 +20,17 @@ events through a transactional outbox, OpenSearch faceted search and Redis cachi
 |---|---|
 | ![Delivery address form with order summary](docs/images/checkout.png) | ![Paid order with items, payment and address](docs/images/order-confirmation.png) |
 
-| Shipment tracking | Admin: orders |
+| Admin: dashboard | Shipment tracking |
 |---|---|
-| ![Order shipped with Delhivery, AWB and courier timeline](docs/images/order-tracking.png) | ![Admin orders with payment, status and AWB](docs/images/admin-orders.png) |
+| ![Admin dashboard with today's orders, revenue, 7-day revenue chart, low stock and most viewed](docs/images/admin-dashboard.png) | ![Order shipped with Delhivery, AWB and courier timeline](docs/images/order-tracking.png) |
 
-| Admin: shipments | Admin: products |
+| Admin: orders | Admin: shipments |
 |---|---|
-| ![Admin shipments with courier status](docs/images/admin-shipments.png) | ![Admin product list with stock and status](docs/images/admin-products.png) |
+| ![Admin orders with payment, status and AWB](docs/images/admin-orders.png) | ![Admin shipments with courier status](docs/images/admin-shipments.png) |
 
-| Admin: edit product | |
+| Admin: products | Admin: edit product |
 |---|---|
-| ![Admin product form](docs/images/admin-edit-product.png) | |
+| ![Admin product list with stock and status](docs/images/admin-products.png) | ![Admin product form](docs/images/admin-edit-product.png) |
 
 ## Status
 
@@ -203,12 +203,6 @@ After changing the API, regenerate the spec and the frontend types:
 cd backend && uv run python -m app.export_openapi ../docs/openapi.json
 cd frontend && npm run api:types
 ```
-
-## Planned screens
-
-Design mockups for the stages still to come. They'll be replaced with screenshots once built.
-
-![Admin dashboard with orders, revenue, low stock and hot products](docs/images/planned-admin-dashboard.png)
 
 ## License
 
