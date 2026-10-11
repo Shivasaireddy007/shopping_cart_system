@@ -29,6 +29,17 @@ class Settings(BaseSettings):
     razorpay_base_url: str = "https://api.razorpay.com/v1"
     unpaid_order_minutes: int = 30
 
+    redis_url: str = "redis://127.0.0.1:6379/0"
+    catalog_cache_enabled: bool = True
+    listing_cache_seconds: int = 300
+    product_cache_seconds: int = 600
+    hot_product_cache_seconds: int = 3600
+    hot_product_count: int = 100
+
+    search_enabled: bool = True
+    search_url: str = "http://127.0.0.1:9200"
+    search_index: str = "products"
+
 
 @lru_cache
 def get_settings() -> Settings:
