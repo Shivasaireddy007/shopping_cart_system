@@ -1,0 +1,21 @@
+# Chart values for the kind test cluster: local images, one replica each, no ingress.
+image:
+  api: shopping-cart-api
+  web: shopping-cart-web
+  tag: ci
+  pullPolicy: Never
+config:
+  corsOrigins: '["http://localhost:8080"]'
+secrets:
+  create: true
+  values:
+    DATABASE_URL: postgresql+asyncpg://shop:shop@postgres:5432/shop
+    JWT_SECRET: kind-test-secret-at-least-32-bytes-long
+api:
+  autoscaling:
+    enabled: false
+  replicas: 1
+web:
+  replicas: 1
+ingress:
+  enabled: false
