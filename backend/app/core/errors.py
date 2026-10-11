@@ -19,6 +19,10 @@ class Conflict(AppError):
     status_code = 409
 
 
+class BadGateway(AppError):
+    status_code = 502
+
+
 class InsufficientStock(Conflict):
     def __init__(self, sku: str, available: int, requested: int) -> None:
         super().__init__(

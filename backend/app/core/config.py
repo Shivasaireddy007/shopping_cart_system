@@ -23,6 +23,12 @@ class Settings(BaseSettings):
     shipping_free_above: int = 99900
     max_quantity_per_item: int = 10
 
+    razorpay_key_id: str = ""
+    razorpay_key_secret: str = ""
+    razorpay_webhook_secret: str = ""
+    razorpay_base_url: str = "https://api.razorpay.com/v1"
+    unpaid_order_minutes: int = 30
+
 
 @lru_cache
 def get_settings() -> Settings:
