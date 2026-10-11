@@ -259,3 +259,45 @@ jobs:
       - name: Show logs on failure
         if: failure()
         run: sudo deploy/demo/compose.sh logs --tail=60
+
+  render:
+    # Builds the single-container image the Render blueprint deploys, runs it the way Render
+    # does (PORT, platform-style postgres:// URL) and makes a simulated purchase.
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: shop
+          POSTGRES_PASSWORD: shop
+          POSTGRES_DB: shop
+        ports: ["5432:5432"]
+        options: --health-cmd "pg_isready -U shop" --health-interval 5s --health-retries 20
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate the blueprint against Render's schema
+        run: |
+          curl -fsSL -o /tmp/render-schema.json https://render.com/schema/render.yaml.json
+          pipx run check-jsonschema --schemafile /tmp/render-schema.json render.yaml
+
+      - name: Build the image
+        run: docker build -f deploy/render/Dockerfile -t shopping-cart-demo .
+
+      - name: Start it like Render
+        run: |
+          docker run -d --name demo --network host -e PORT=10000 -e JWT_SECRET=ci-secret-at-least-32-bytes-long \
+            -e DATABASE_URL=postgres://shop:shop@127.0.0.1:5432/shop -e REDIS_URL=redis://127.0.0.1:6379/0 \
+            shopping-cart-demo
+          for i in $(seq 1 60); do curl -fsS http://localhost:10000/health > /dev/null 2>&1 && break; sleep 2; done
+
+      - name: Check the demo, including a simulated purchase
+        run: shellcheck deploy/render/*.sh && deploy/render/check.sh http://localhost:10000
+
+      - name: Show logs on failure
+        if: failure()
+        run: docker logs demo --tail=80
