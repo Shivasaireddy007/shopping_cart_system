@@ -951,6 +951,54 @@
         }
       }
     },
+    "/api/v1/orders/{number}/demo-payment": {
+      "post": {
+        "tags": [
+          "Checkout and orders"
+        ],
+        "summary": "Demo Payment",
+        "description": "Public demo only: simulate a successful payment and get what Razorpay Checkout would return,\nto confirm with `verify-payment`. `404` unless the server runs with `DEMO_PAYMENTS`.",
+        "operationId": "demo_payment_api_v1_orders__number__demo_payment_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerifyPaymentIn"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/orders/{number}/verify-payment": {
       "post": {
         "tags": [

@@ -100,6 +100,21 @@ async def retry_payment(
     )
 
 
+@router.post("/orders/{number}/demo-payment")
+async def demo_payment(
+    number: str, user: CurrentUser, session: SessionDep, razorpay: RazorpayDep
+) -> VerifyPaymentIn:
+    """Public demo only: simulate a successful payment and get what Razorpay Checkout would return,
+    to confirm with `verify-payment`. `404` unless the server runs with `DEMO_PAYMENTS`."""
+    if not razorpay.demo:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Not found.")
+    order = await _own_order(session, user.id, number)
+    if order.status != OrderStatus.pending_payment or order.razorpay_order_id is None:
+        raise HTTPException(status.HTTP_409_CONFLICT, "This order can't be paid.")
+    payment_id, signature = razorpay.demo_payment(order.razorpay_order_id)
+    return VerifyPaymentIn(razorpay_payment_id=payment_id, razorpay_signature=signature)
+
+
 @router.post("/orders/{number}/verify-payment")
 async def verify_payment(
     number: str, data: VerifyPaymentIn, user: CurrentUser, session: SessionDep, razorpay: RazorpayDep
