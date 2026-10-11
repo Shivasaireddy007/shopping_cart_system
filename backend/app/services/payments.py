@@ -10,6 +10,7 @@ from datetime import UTC, datetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.events.outbox import ORDERS_TOPIC, add_event
 from app.models import Order, OrderStatus, Payment
 
 log = logging.getLogger(__name__)
@@ -40,6 +41,9 @@ async def record_captured(
 
     order.status = OrderStatus.paid
     order.paid_at = datetime.now(UTC)
+    add_event(
+        session, ORDERS_TOPIC, order.number, "order.paid", {"order_id": order.id, "number": order.number}
+    )
     return order
 
 

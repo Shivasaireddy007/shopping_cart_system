@@ -9,6 +9,7 @@ from sqlalchemy.orm import selectinload
 
 from app.core.config import get_settings
 from app.core.errors import AppError, BadGateway, InsufficientStock, NotFound
+from app.events.outbox import ORDERS_TOPIC, add_event
 from app.models import Cart, CartItem, Order, OrderItem, OrderStatus, Product
 from app.services.razorpay import RazorpayClient, RazorpayError
 from app.services.shipping import shipping_fee
@@ -139,6 +140,9 @@ async def cancel(session: AsyncSession, order_id: int) -> bool:
 
     order.status = OrderStatus.cancelled
     order.cancelled_at = datetime.now(UTC)
+    add_event(
+        session, ORDERS_TOPIC, order.number, "order.cancelled", {"order_id": order.id, "number": order.number}
+    )
     await session.commit()
     return True
 
