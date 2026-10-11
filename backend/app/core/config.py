@@ -40,6 +40,14 @@ class Settings(BaseSettings):
     search_url: str = "http://127.0.0.1:9200"
     search_index: str = "products"
 
+    kafka_bootstrap_servers: str = "127.0.0.1:9092"
+
+    shiprocket_email: str = ""
+    shiprocket_password: str = ""
+    shiprocket_pickup_location: str = "Primary"
+    shiprocket_webhook_token: str = ""
+    shiprocket_base_url: str = "https://apiv2.shiprocket.in/v1/external"
+
 
 @lru_cache
 def get_settings() -> Settings:

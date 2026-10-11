@@ -2,7 +2,9 @@
 
 from app.models.cart import Cart, CartItem
 from app.models.catalog import Category, Product
+from app.models.events import OutboxEvent, ProcessedEvent
 from app.models.order import Order, OrderItem, OrderStatus, Payment, WebhookEvent
+from app.models.shipment import Shipment
 from app.models.user import User
 
 __all__ = [
@@ -12,8 +14,11 @@ __all__ = [
     "Order",
     "OrderItem",
     "OrderStatus",
+    "OutboxEvent",
     "Payment",
+    "ProcessedEvent",
     "Product",
+    "Shipment",
     "User",
     "WebhookEvent",
 ]
