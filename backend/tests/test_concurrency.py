@@ -28,11 +28,8 @@ async def engine(connection: AsyncConnection) -> AsyncIterator[AsyncEngine]:
     eng = create_async_engine(get_settings().database_url, pool_size=12)
     yield eng
     async with eng.begin() as conn:
-        await conn.execute(
-            text(
-                "TRUNCATE order_items, orders, cart_items, carts, products, categories, users RESTART IDENTITY CASCADE"
-            )
-        )
+        tables = "order_items, orders, cart_items, carts, products, categories, users"
+        await conn.execute(text(f"TRUNCATE {tables} RESTART IDENTITY CASCADE"))
     await eng.dispose()
 
 
