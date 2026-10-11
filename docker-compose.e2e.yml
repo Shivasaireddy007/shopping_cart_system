@@ -1,0 +1,27 @@
+# Points the stack at the payment and shipping stubs for end-to-end tests:
+#   docker compose -f docker-compose.yml -f docker-compose.e2e.yml up --build -d
+x-stubbed: &stubbed
+  environment:
+    RAZORPAY_KEY_ID: rzp_test_e2e
+    RAZORPAY_KEY_SECRET: e2e-razorpay-secret
+    RAZORPAY_BASE_URL: http://stubs:8090/razorpay
+    SHIPROCKET_EMAIL: e2e@example.com
+    SHIPROCKET_PASSWORD: e2e
+    SHIPROCKET_WEBHOOK_TOKEN: e2e-webhook-token
+    SHIPROCKET_BASE_URL: http://stubs:8090/shiprocket
+
+services:
+  stubs:
+    image: python:3.12-alpine
+    command: ["python", "/stub/payment_shipping_stub.py"]
+    volumes:
+      - ./e2e:/stub:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8090/health')"]
+      interval: 3s
+      retries: 20
+
+  api: *stubbed
+  relay: *stubbed
+  shipping-worker: *stubbed
+  search-worker: *stubbed
