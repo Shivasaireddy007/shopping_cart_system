@@ -124,15 +124,18 @@ jobs:
         run: npm run build
 
   stack:
-    # Builds the images and runs the whole stack with Docker Compose, then smoke-tests it.
+    # Builds the images, runs the whole stack with Docker Compose (payment and shipping
+    # providers stubbed), then smoke-tests it and runs the Playwright purchase journey.
     runs-on: ubuntu-latest
     needs: [backend, frontend]
+    env:
+      COMPOSE: docker compose -f docker-compose.yml -f docker-compose.e2e.yml
     steps:
       - uses: actions/checkout@v4
 
       - name: Build and start the stack
         run: |
-          docker compose up --build --detach
+          $COMPOSE up --build --detach
           for i in $(seq 1 120); do
             curl -fsS http://localhost:8080/api/v1/categories > /dev/null 2>&1 && exit 0
             sleep 3
@@ -141,16 +144,39 @@ jobs:
 
       - name: Seed demo data and build the search index
         run: |
-          docker compose run --rm api python -m app.seed --products 300
-          docker compose run --rm api python -m app.jobs.reindex
+          $COMPOSE run --rm api python -m app.seed --products 300
+          $COMPOSE run --rm api python -m app.jobs.reindex
 
       - name: Smoke test
         run: scripts/smoke-test.sh http://localhost:8080
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Playwright
+        working-directory: frontend
+        run: npm ci && npx playwright install --with-deps chromium
+
+      - name: End-to-end purchase journey
+        working-directory: frontend
+        run: npx playwright test
+        env:
+          E2E_BASE_URL: http://localhost:8080
+
+      - name: Keep the Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: frontend/playwright-report
+
       - name: Show logs on failure
         if: failure()
-        run: docker compose logs --tail=80
+        run: $COMPOSE logs --tail=80
 
       - name: Stop the stack
         if: always()
-        run: docker compose down --volumes
+        run: $COMPOSE down --volumes
