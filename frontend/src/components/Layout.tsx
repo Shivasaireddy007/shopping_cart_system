@@ -35,6 +35,11 @@ export function Layout() {
                 Admin
               </NavLink>
             ) : null}
+            {me ? (
+              <NavLink to="/orders" className={linkClass}>
+                Orders
+              </NavLink>
+            ) : null}
             <NavLink to="/cart" className={linkClass}>
               Cart
               {count > 0 ? (

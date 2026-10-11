@@ -11,8 +11,11 @@ import { ProductForm } from './pages/admin/ProductForm'
 import { RequireAdmin } from './pages/admin/RequireAdmin'
 import { LoginPage, RegisterPage } from './pages/AuthPages'
 import { CartPage } from './pages/CartPage'
+import { CheckoutPage } from './pages/CheckoutPage'
 import { Catalog } from './pages/Catalog'
 import { NotFound } from './pages/NotFound'
+import { OrderPage } from './pages/OrderPage'
+import { OrdersPage } from './pages/OrdersPage'
 import { ProductPage } from './pages/ProductPage'
 
 const queryClient = new QueryClient({
@@ -26,6 +29,9 @@ const router = createBrowserRouter([
       { path: '/', element: <Catalog /> },
       { path: '/p/:slug', element: <ProductPage /> },
       { path: '/cart', element: <CartPage /> },
+      { path: '/checkout', element: <CheckoutPage /> },
+      { path: '/orders', element: <OrdersPage /> },
+      { path: '/orders/:number', element: <OrderPage /> },
       { path: '/login', element: <LoginPage /> },
       { path: '/register', element: <RegisterPage /> },
       {
