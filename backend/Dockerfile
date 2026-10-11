@@ -20,7 +20,8 @@ ENV PYTHONUNBUFFERED=1 PATH="/app/.venv/bin:$PATH"
 RUN useradd --system --uid 10001 --home /app app
 WORKDIR /app
 COPY --from=build --chown=app:app /app /app
-USER app
+# Numeric so Kubernetes can verify runAsNonRoot
+USER 10001
 EXPOSE 8000
 
 HEALTHCHECK --interval=10s --timeout=3s --retries=5 \
