@@ -1,15 +1,28 @@
+import json
+import logging
 from typing import Annotated
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
 
 from app.api.deps import CurrentUser, SessionDep
-from app.models import Order, OrderStatus
+from app.core.redis import get_redis
+from app.models import Order, OrderStatus, Shipment
 from app.schemas.common import Page
-from app.schemas.orders import CheckoutIn, CheckoutOut, OrderOut, RazorpayCheckout, VerifyPaymentIn
+from app.schemas.orders import (
+    CheckoutIn,
+    CheckoutOut,
+    OrderOut,
+    RazorpayCheckout,
+    TrackingEvent,
+    TrackingOut,
+    VerifyPaymentIn,
+)
 from app.services import orders, payments
 from app.services.razorpay import RazorpayClient, get_razorpay
+from app.services.shiprocket import ShiprocketClient, get_shiprocket
 
 router = APIRouter(tags=["Checkout and orders"])
 
@@ -110,3 +123,43 @@ async def cancel_order(number: str, user: CurrentUser, session: SessionDep) -> O
     if not await orders.cancel(session, order.id):
         raise HTTPException(status.HTTP_409_CONFLICT, "This order can no longer be cancelled.")
     return OrderOut.model_validate(await _own_order(session, user.id, number))
+
+
+log = logging.getLogger(__name__)
+
+
+@router.get("/orders/{number}/tracking")
+async def tracking(
+    number: str,
+    user: CurrentUser,
+    session: SessionDep,
+    shiprocket: Annotated[ShiprocketClient, Depends(get_shiprocket)],
+) -> TrackingOut:
+    """Courier, AWB and tracking timeline for an order. The timeline is cached for 10 minutes."""
+    order = await _own_order(session, user.id, number)
+    shipment = await session.scalar(select(Shipment).where(Shipment.order_id == order.id))
+    if shipment is None or shipment.awb_code is None:
+        return TrackingOut(status=order.status, courier_name=None, awb_code=None, track_url=None, events=[])
+
+    key = f"tracking:{shipment.awb_code}"
+    redis = get_redis()
+    if cached := await redis.get(key):
+        data = json.loads(cached)
+    else:
+        try:
+            data = await shiprocket.track(shipment.awb_code)
+            await redis.set(key, json.dumps(data), ex=600)
+        except httpx.HTTPError:
+            log.warning("Could not fetch tracking for %s", shipment.awb_code, exc_info=True)
+            data = {}
+
+    return TrackingOut(
+        status=order.status,
+        courier_name=shipment.courier_name,
+        awb_code=shipment.awb_code,
+        track_url=data.get("track_url"),
+        events=[
+            TrackingEvent(date=a.get("date", ""), activity=a.get("activity", ""), location=a.get("location"))
+            for a in data.get("shipment_track_activities") or []
+        ],
+    )

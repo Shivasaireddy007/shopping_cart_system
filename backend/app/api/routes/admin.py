@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import APIRouter, HTTPException, Query, status
 from sqlalchemy import func, or_, select
@@ -7,9 +7,10 @@ from sqlalchemy.orm import selectinload
 
 from app.api.deps import CurrentAdmin, SessionDep
 from app.core.text import slugify, unique_slug
-from app.models import Category, Product
+from app.models import Category, Order, Payment, Product, Shipment, User
 from app.schemas.catalog import CategoryCreate, CategoryOut, ProductCreate, ProductOut, ProductUpdate
 from app.schemas.common import Page
+from app.schemas.orders import AdminOrderOut, AdminShipmentOut
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
@@ -128,3 +129,83 @@ async def delete_category(category_id: int, _: CurrentAdmin, session: SessionDep
 
     await session.delete(category)
     await session.commit()
+
+
+@router.get("/orders")
+async def list_orders(
+    _: CurrentAdmin,
+    session: SessionDep,
+    status_filter: Annotated[str | None, Query(alias="status", max_length=32)] = None,
+    page: Annotated[int, Query(ge=1)] = 1,
+) -> Page[AdminOrderOut]:
+    """All orders, newest first, with payment and shipment state."""
+
+    def latest_payment(column: Any) -> Any:
+        return (
+            select(column)
+            .where(Payment.order_id == Order.id)
+            .order_by(Payment.id.desc())
+            .limit(1)
+            .scalar_subquery()
+        )
+
+    query = (
+        select(
+            Order,
+            User.email,
+            latest_payment(Payment.status),
+            latest_payment(Payment.method),
+            Shipment.status,
+            Shipment.awb_code,
+        )
+        .join(User, User.id == Order.user_id)
+        .outerjoin(Shipment, Shipment.order_id == Order.id)
+    )
+    if status_filter:
+        query = query.where(Order.status == status_filter)
+
+    total = await session.scalar(select(func.count()).select_from(query.subquery())) or 0
+    rows = await session.execute(
+        query.order_by(Order.id.desc()).limit(PER_PAGE).offset((page - 1) * PER_PAGE)
+    )
+    items = [
+        AdminOrderOut(
+            number=order.number,
+            customer_email=email,
+            total=order.total,
+            status=order.status,
+            payment_status=pay_status,
+            payment_method=pay_method,
+            shipment_status=ship_status,
+            awb_code=awb,
+            created_at=order.created_at,
+        )
+        for order, email, pay_status, pay_method, ship_status, awb in rows
+    ]
+    return Page(items=items, total=total, page=page, per_page=PER_PAGE)
+
+
+@router.get("/shipments")
+async def list_shipments(
+    _: CurrentAdmin, session: SessionDep, page: Annotated[int, Query(ge=1)] = 1
+) -> Page[AdminShipmentOut]:
+    """Shipments, most recently updated first."""
+    total = await session.scalar(select(func.count(Shipment.id))) or 0
+    rows = await session.execute(
+        select(Shipment, Order.number)
+        .join(Order, Order.id == Shipment.order_id)
+        .order_by(Shipment.updated_at.desc())
+        .limit(PER_PAGE)
+        .offset((page - 1) * PER_PAGE)
+    )
+    items = [
+        AdminShipmentOut(
+            order_number=number,
+            awb_code=s.awb_code,
+            courier_name=s.courier_name,
+            status=s.status,
+            status_updated_at=s.status_updated_at,
+        )
+        for s, number in rows
+    ]
+    return Page(items=items, total=total, page=page, per_page=PER_PAGE)

@@ -70,3 +70,37 @@ class CheckoutOut(BaseModel):
 class VerifyPaymentIn(BaseModel):
     razorpay_payment_id: str = Field(max_length=64)
     razorpay_signature: str = Field(max_length=128)
+
+
+class TrackingEvent(BaseModel):
+    date: str
+    activity: str
+    location: str | None = None
+
+
+class TrackingOut(BaseModel):
+    status: str
+    courier_name: str | None
+    awb_code: str | None
+    track_url: str | None
+    events: list[TrackingEvent]
+
+
+class AdminOrderOut(BaseModel):
+    number: str
+    customer_email: str
+    total: int
+    status: str
+    payment_status: str | None
+    payment_method: str | None
+    shipment_status: str | None
+    awb_code: str | None
+    created_at: datetime
+
+
+class AdminShipmentOut(BaseModel):
+    order_number: str
+    awb_code: str | None
+    courier_name: str | None
+    status: str
+    status_updated_at: datetime | None
