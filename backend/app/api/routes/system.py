@@ -59,7 +59,7 @@ async def _redis_version() -> str | None:
 
 @router.get("/stats")
 async def stats(session: SessionDep) -> SystemStats:
-    """Live numbers from this server: latency of recent API requests, cache hit rate, checkout
+    """Live numbers from this server: latency of recent API reads, cache hit rate, checkout
     outcomes and the latest events written to the outbox."""
     cache = _counter_totals(CACHE_LOOKUPS, "result")
     hits, misses = cache.get("hit", 0), cache.get("miss", 0)

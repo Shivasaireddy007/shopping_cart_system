@@ -1607,7 +1607,7 @@
           "System"
         ],
         "summary": "Stats",
-        "description": "Live numbers from this server: latency of recent API requests, cache hit rate, checkout\noutcomes and the latest events written to the outbox.",
+        "description": "Live numbers from this server: latency of recent API reads, cache hit rate, checkout\noutcomes and the latest events written to the outbox.",
         "operationId": "stats_api_v1_system_stats_get",
         "responses": {
           "200": {

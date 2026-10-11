@@ -90,9 +90,9 @@ function LiveStats() {
     <div className="grid gap-4">
       <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat
-          label="API latency, p95"
+          label="Read latency, p95"
           value={latency.p95_ms != null ? `${latency.p95_ms} ms` : '–'}
-          note={latency.p50_ms != null ? `median ${latency.p50_ms} ms · last ${latency.requests} requests` : 'Browse the shop to generate traffic'}
+          note={latency.p50_ms != null ? `median ${latency.p50_ms} ms · last ${latency.requests} GET requests` : 'Browse the shop to generate traffic'}
         />
         <Stat
           label="Redis cache hit rate"

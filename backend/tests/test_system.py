@@ -69,3 +69,15 @@ async def assert_cleaned_up() -> None:
 
 def test_accounts_without_a_valid_hash_cannot_sign_in() -> None:
     assert verify_password("!", "anything") is False
+
+
+async def test_latency_counts_reads_only(client: AsyncClient, factory: Factory) -> None:
+    from app.core.observability import RECENT_API_SECONDS
+
+    RECENT_API_SECONDS.clear()
+    await client.post(
+        "/api/v1/auth/login", json={"email": "nobody@example.com", "password": "wrong-password"}
+    )
+    await client.get("/api/v1/categories")
+
+    assert (await client.get("/api/v1/system/stats")).json()["latency"]["requests"] == 1

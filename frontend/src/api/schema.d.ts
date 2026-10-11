@@ -556,7 +556,7 @@ export interface paths {
         };
         /**
          * Stats
-         * @description Live numbers from this server: latency of recent API requests, cache hit rate, checkout
+         * @description Live numbers from this server: latency of recent API reads, cache hit rate, checkout
          *     outcomes and the latest events written to the outbox.
          */
         get: operations["stats_api_v1_system_stats_get"];

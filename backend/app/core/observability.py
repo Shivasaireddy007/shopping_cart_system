@@ -24,8 +24,9 @@ PAID_AMOUNT = Counter("orders_paid_paise_total", "Revenue from paid orders, in p
 CACHE_LOOKUPS = Counter("catalog_cache_lookups_total", "Catalog cache lookups", ["kind", "result"])
 
 STARTED_AT = time.time()
-# Latencies of the most recent API requests, for exact percentiles on the system stats page
-# (Prometheus histograms only give bucket bounds).
+# Latencies of the most recent API reads (GET), for exact percentiles on the system stats page
+# (Prometheus histograms only give bucket bounds). Writes are left out: sign-up and login are slow
+# by design (Argon2), which would hide what the read path and its cache do.
 RECENT_API_SECONDS: deque[float] = deque(maxlen=2000)
 
 
@@ -59,7 +60,8 @@ def install(app: FastAPI) -> None:
         route = _route_template(request)
         if route != "/metrics":
             REQUEST_SECONDS.labels(request.method, route, str(response.status_code)).observe(elapsed)
-        if route.startswith("/api/v1/") and not route.startswith("/api/v1/system/"):
+        is_read = request.method == "GET" and route.startswith("/api/v1/")
+        if is_read and not route.startswith("/api/v1/system/"):
             RECENT_API_SECONDS.append(elapsed)
         # Shown in the browser's network panel and the demo's request inspector.
         response.headers["Server-Timing"] = f"app;dur={elapsed * 1000:.1f}"
