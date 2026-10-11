@@ -1,7 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
+from starlette.exceptions import HTTPException
+from starlette.responses import Response
+from starlette.types import Scope
 
 from app.api.routes import admin, auth, cart, catalog, orders, webhooks
 from app.core import observability
@@ -22,6 +26,19 @@ with the refresh token to get a new pair.
 
 **Errors.** Validation errors return `422`. Stock conflicts return `409` with the available quantity.
 """
+
+
+class SinglePageApp(StaticFiles):
+    """The built web app. Unknown paths load index.html so client-side routes survive a reload;
+    unknown API paths still get a 404."""
+
+    async def get_response(self, path: str, scope: Scope) -> Response:
+        try:
+            return await super().get_response(path, scope)
+        except HTTPException as exc:
+            if exc.status_code != 404 or path.startswith("api/"):
+                raise
+            return await super().get_response("index.html", scope)
 
 
 def create_app() -> FastAPI:
@@ -65,6 +82,10 @@ def create_app() -> FastAPI:
         return JSONResponse(
             {"status": "ok" if healthy else "unavailable", **checks}, status_code=200 if healthy else 503
         )
+
+    if settings.web_dir:
+        # Mounted last, so the API routes above take precedence.
+        app.mount("/", SinglePageApp(directory=settings.web_dir, html=True), name="web")
 
     return app
 
