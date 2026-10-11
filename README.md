@@ -42,7 +42,8 @@ The project is built in stages. Each stage is complete and tested before the nex
 | 2 | Checkout with row-locked stock reservation, Razorpay payments and signed webhooks | ✅ Done |
 | 3 | Redis caching for hot products, OpenSearch faceted search | ✅ Done |
 | 4 | Kafka order events with the transactional outbox pattern, Shiprocket shipping | ✅ Done |
-| 5 | Docker and Kubernetes (Helm), observability, k6 load tests, live demo | Next |
+| 5 | Docker, Kubernetes (Helm), Prometheus metrics and tracing, admin dashboard, k6 load tests, Playwright e2e | ✅ Done |
+| 6 | Public live demo | Next |
 
 ## Tech stack
 
@@ -56,7 +57,9 @@ The project is built in stages. Each stage is complete and tested before the nex
 | Payments | Razorpay Orders API, Razorpay Checkout, HMAC-signed webhooks |
 | Search and cache | OpenSearch 3, Redis |
 | Events and shipping | Kafka (aiokafka), transactional outbox, Shiprocket API and webhooks |
-| Planned | Docker, Kubernetes, Playwright, k6 |
+| Deployment | Docker (multi-stage, non-root), Docker Compose, Kubernetes with a Helm chart (probes, HPA, PDB, CronJobs), kind in CI |
+| Observability | Prometheus metrics, OpenTelemetry tracing to Jaeger, readiness and liveness probes |
+| Testing at scale | Playwright end-to-end purchase test, k6 load tests |
 
 ## Event flow
 
@@ -68,6 +71,16 @@ flowchart LR
     K -->|product.changed| IDX[search consumer] --> OS[(OpenSearch)]
     SR -->|status webhook| API
 ```
+
+## Performance
+
+Measured with k6 on a 100,000-product catalog at a fixed 1,000 requests per second
+([details and how to reproduce](benchmarks/README.md)):
+
+| | Overall p95 | Listing p95 | Product p95 | Dropped requests |
+|---|---|---|---|---|
+| PostgreSQL only | 99.1 ms | 95.3 ms | 90.2 ms | 63 |
+| With Redis cache | **5.5 ms** | **4.9 ms** | **2.0 ms** | **0** |
 
 ## Design decisions
 
@@ -109,6 +122,17 @@ flowchart LR
 - **Resumable shipping.** The shipping consumer saves each Shiprocket step as it succeeds, so a retry
   after a courier-assignment failure continues instead of creating a duplicate shipment. Courier webhooks
   are token-checked, de-duplicated, and only ever move an order forward (paid → shipped → delivered).
+- **Observable by default.** `/metrics` exposes request latency by route template (not raw path, so
+  label counts stay bounded) plus checkouts, paid orders, revenue and cache hit rates. Setting
+  `OTEL_EXPORTER_OTLP_ENDPOINT` traces each request through FastAPI, SQLAlchemy, Redis and outgoing
+  HTTP calls; Docker Compose ships Jaeger to view them.
+- **Deployable, and deployed in CI.** The Helm chart runs migrations as a pre-install/pre-upgrade hook,
+  splits liveness (`/health`) from readiness (`/ready`, which checks PostgreSQL and Redis), autoscales
+  the API, keeps a PodDisruptionBudget, runs the jobs as CronJobs, and uses read-only root filesystems
+  with non-root users. Every CI run installs it into a kind cluster and smoke-tests the result.
+- **The whole purchase, tested in a browser.** A Playwright test registers, searches, adds to cart,
+  pays through a Razorpay stand-in with a real HMAC signature, and waits for the Kafka-driven shipment
+  to appear, against the full Docker Compose stack.
 - **Abandoned checkouts release stock.** Unpaid orders are cancelled after 30 minutes by a job
   (`python -m app.jobs.expire_orders`), which returns their stock.
 
@@ -158,6 +182,21 @@ With the backend running, interactive docs are at [`/docs`](http://127.0.0.1:800
 
 ## Running locally
 
+### With Docker
+
+```bash
+docker compose up --build -d
+docker compose exec api python -m app.seed --products 300
+docker compose exec api python -m app.jobs.reindex
+```
+
+The shop is at http://localhost:8080, API docs at http://localhost:8000/docs, metrics at
+http://localhost:8000/metrics and Jaeger traces at http://localhost:16686. Payments and shipping need Razorpay and Shiprocket test credentials in
+`backend/.env`; to try the full flow without them, add the local stand-ins:
+`docker compose -f docker-compose.yml -f docker-compose.e2e.yml up --build -d`.
+
+### Without Docker
+
 You need Python 3.12 with [uv](https://docs.astral.sh/uv/), Node.js 22+, PostgreSQL, Redis,
 OpenSearch (`SEARCH_URL`) and Kafka (`KAFKA_BOOTSTRAP_SERVERS`).
 
@@ -190,11 +229,26 @@ npm run dev
 
 Demo logins: `demo@example.com` (customer) and `admin@example.com` (admin), password `demo-password`.
 
+## Kubernetes
+
+```bash
+docker build -t <registry>/shopping-cart-api:1.0.0 backend && docker push <registry>/shopping-cart-api:1.0.0
+docker build -t <registry>/shopping-cart-web:1.0.0 frontend && docker push <registry>/shopping-cart-web:1.0.0
+helm install shop deploy/helm/shopping-cart \
+  --set image.api=<registry>/shopping-cart-api --set image.web=<registry>/shopping-cart-web \
+  --set config.corsOrigins='["https://shop.example.com"]' --set ingress.host=shop.example.com
+```
+
+The chart expects a Secret named `shopping-cart-secrets` (`DATABASE_URL`, `JWT_SECRET`, Razorpay and
+Shiprocket keys) and reachable PostgreSQL, Redis, OpenSearch and Kafka. [`deploy/kind/`](deploy/kind)
+has the in-cluster dependencies and values that CI uses.
+
 ## Tests and checks
 
 ```bash
 cd backend && createdb shop_test && uv run pytest && uv run ruff check . && uv run mypy app
 cd frontend && npm test && npm run typecheck && npm run lint
+cd frontend && npx playwright test   # against the Docker stack with docker-compose.e2e.yml
 ```
 
 After changing the API, regenerate the spec and the frontend types:
