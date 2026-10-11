@@ -44,11 +44,17 @@ matters: same machine, data and load, with only the cache switched.
 ## Reproduce
 
 ```bash
+# From the repo root
 createdb bench
-DATABASE_URL=postgresql+asyncpg://postgres@127.0.0.1:5432/bench uv run alembic upgrade head
+export DATABASE_URL=postgresql+asyncpg://postgres@127.0.0.1:5432/bench
+(cd backend && uv run alembic upgrade head && uv run python -m app.seed --products 0)  # categories
 psql bench -f benchmarks/sql/seed_100k_products.sql
-DATABASE_URL=… SEARCH_INDEX=bench_products uv run python -m app.jobs.reindex
-DATABASE_URL=… REDIS_URL=redis://127.0.0.1:6379/3 SEARCH_INDEX=bench_products \
-  CATALOG_CACHE_ENABLED=false uv run uvicorn app.main:app --port 8001 --workers 4
-k6 run -e RATE=1000 -e DURATION=60s --summary-export=results/run.json benchmarks/catalog.js
+(cd backend && SEARCH_INDEX=bench_products uv run python -m app.jobs.reindex)
+
+# Start the API (set CATALOG_CACHE_ENABLED=true for the cached run)
+(cd backend && REDIS_URL=redis://127.0.0.1:6379/3 SEARCH_INDEX=bench_products \
+  CATALOG_CACHE_ENABLED=false uv run uvicorn app.main:app --port 8001 --workers 4)
+
+# In another terminal
+k6 run -e RATE=1000 -e DURATION=60s --summary-export=benchmarks/results/run.json benchmarks/catalog.js
 ```
