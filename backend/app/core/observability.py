@@ -6,6 +6,7 @@ is set (e.g. http://jaeger:4318), and covers requests, SQL, Redis and outgoing H
 
 import os
 import time
+from collections import deque
 from collections.abc import Awaitable, Callable
 
 from fastapi import FastAPI, Request, Response
@@ -21,6 +22,11 @@ CHECKOUTS = Counter("checkouts_total", "Checkout attempts by outcome", ["outcome
 ORDERS_PAID = Counter("orders_paid_total", "Orders marked paid")
 PAID_AMOUNT = Counter("orders_paid_paise_total", "Revenue from paid orders, in paise")
 CACHE_LOOKUPS = Counter("catalog_cache_lookups_total", "Catalog cache lookups", ["kind", "result"])
+
+STARTED_AT = time.time()
+# Latencies of the most recent API requests, for exact percentiles on the system stats page
+# (Prometheus histograms only give bucket bounds).
+RECENT_API_SECONDS: deque[float] = deque(maxlen=2000)
 
 
 def _route_template(request: Request) -> str:
@@ -49,11 +55,14 @@ def install(app: FastAPI) -> None:
     ) -> Response:
         started = time.perf_counter()
         response = await call_next(request)
+        elapsed = time.perf_counter() - started
         route = _route_template(request)
         if route != "/metrics":
-            REQUEST_SECONDS.labels(request.method, route, str(response.status_code)).observe(
-                time.perf_counter() - started
-            )
+            REQUEST_SECONDS.labels(request.method, route, str(response.status_code)).observe(elapsed)
+        if route.startswith("/api/v1/") and not route.startswith("/api/v1/system/"):
+            RECENT_API_SECONDS.append(elapsed)
+        # Shown in the browser's network panel and the demo's request inspector.
+        response.headers["Server-Timing"] = f"app;dur={elapsed * 1000:.1f}"
         return response
 
     @app.get("/metrics", include_in_schema=False)

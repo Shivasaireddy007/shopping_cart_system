@@ -120,3 +120,13 @@ async def test_views_rank_hot_products_and_warming_caches_them(
     assert not await cache.redis.sismember("catalog:hot", c.slug)
     ttl = await cache.redis.ttl(f"catalog:product:{b.slug}")
     assert ttl > get_settings().product_cache_seconds
+
+
+async def test_responses_say_how_they_were_served(client: AsyncClient, factory: Factory) -> None:
+    product = await factory.product()
+
+    first = await client.get(f"/api/v1/products/{product.slug}")
+    second = await client.get(f"/api/v1/products/{product.slug}")
+
+    assert (first.headers["X-Cache"], second.headers["X-Cache"]) == ("MISS", "HIT")
+    assert second.headers["Server-Timing"].startswith("app;dur=")

@@ -33,6 +33,8 @@ class CatalogCache:
     def __init__(self, redis: Redis) -> None:
         self.redis = redis
         self.settings = get_settings()
+        # How the last lookup was served ("hit", "miss" or "bypass"), for the X-Cache header.
+        self.last_lookup = "bypass"
 
     async def listing(self, filters: dict[str, Any], build: Callable[[], Awaitable[str]]) -> str:
         """Returns the cached JSON for a listing, building and storing it on a miss."""
@@ -44,8 +46,10 @@ class CatalogCache:
             key = f"catalog:list:v{version}:{digest}"
             if (cached := await self.redis.get(key)) is not None:
                 CACHE_LOOKUPS.labels("listing", "hit").inc()
+                self.last_lookup = "hit"
                 return str(cached)
             CACHE_LOOKUPS.labels("listing", "miss").inc()
+            self.last_lookup = "miss"
         except RedisError:
             log.warning("Redis unavailable, serving listing uncached", exc_info=True)
             return await build()
@@ -61,8 +65,10 @@ class CatalogCache:
         try:
             if (cached := await self.redis.get(_product_key(slug))) is not None:
                 CACHE_LOOKUPS.labels("product", "hit").inc()
+                self.last_lookup = "hit"
                 return str(cached)
             CACHE_LOOKUPS.labels("product", "miss").inc()
+            self.last_lookup = "miss"
             hot = await self.redis.sismember(HOT_KEY, slug)
         except RedisError:
             log.warning("Redis unavailable, serving product uncached", exc_info=True)

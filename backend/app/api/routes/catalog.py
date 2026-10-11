@@ -31,8 +31,11 @@ CacheDep = Annotated[CatalogCache, Depends(get_catalog_cache)]
 SearchDep = Annotated[SearchClient, Depends(get_search_client)]
 
 
-def _json(payload: str) -> Response:
-    return Response(content=payload, media_type="application/json")
+def _json(payload: str, cache: CatalogCache) -> Response:
+    """A cached JSON body, with X-Cache saying whether Redis served it."""
+    return Response(
+        content=payload, media_type="application/json", headers={"X-Cache": cache.last_lookup.upper()}
+    )
 
 
 @router.get("/categories")
@@ -58,7 +61,7 @@ async def list_products(
         )
         return page.model_dump_json()
 
-    return _json(await cache.listing(filters.model_dump(mode="json"), build))
+    return _json(await cache.listing(filters.model_dump(mode="json"), build), cache)
 
 
 @router.get("/products/{slug}", response_model=ProductOut)
@@ -73,7 +76,7 @@ async def get_product(slug: str, session: SessionDep, cache: CacheDep) -> Respon
     if payload is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Product not found.")
     await cache.record_view(json.loads(payload)["id"])
-    return _json(payload)
+    return _json(payload, cache)
 
 
 @router.get("/search")
