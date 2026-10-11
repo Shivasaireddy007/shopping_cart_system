@@ -3,7 +3,8 @@
     uv run python -m app.seed --products 1000 --orders 60
 
 Safe to run repeatedly: it only adds products when the catalog is empty, and only adds
-sample orders when there are none.
+sample orders when there are none. `--reset` empties every table first (the public demo
+does this nightly).
 """
 
 import argparse
@@ -13,12 +14,12 @@ import secrets
 from datetime import UTC, datetime, timedelta
 
 from faker import Faker
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import hash_password
 from app.core.text import slugify, unique_slug
-from app.db import SessionLocal
+from app.db import Base, SessionLocal
 from app.models import Category, Order, OrderItem, OrderStatus, Payment, Product, User
 from app.services.shipping import shipping_fee
 
@@ -52,9 +53,18 @@ DEMO_USERS = [
 DEMO_PASSWORD = "demo-password"
 
 
-async def seed(product_count: int, order_count: int = 0) -> None:
+async def reset(session: AsyncSession) -> None:
+    """Empty every application table, keeping the schema and Alembic's version."""
+    tables = ", ".join(table.name for table in Base.metadata.sorted_tables)
+    await session.execute(text(f"TRUNCATE {tables} RESTART IDENTITY CASCADE"))
+
+
+async def seed(product_count: int, order_count: int = 0, *, reset_first: bool = False) -> None:
     fake = Faker("en_IN")
     async with SessionLocal() as session:
+        if reset_first:
+            await reset(session)
+            print("Emptied all tables.")
         for email, name, is_admin in DEMO_USERS:
             if not await session.scalar(select(User.id).where(User.email == email)):
                 session.add(
@@ -180,5 +190,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--products", type=int, default=1000)
     parser.add_argument("--orders", type=int, default=0, help="sample orders over the last 14 days")
+    parser.add_argument("--reset", action="store_true", help="delete all existing data first")
     args = parser.parse_args()
-    asyncio.run(seed(args.products, args.orders))
+    asyncio.run(seed(args.products, args.orders, reset_first=args.reset))
