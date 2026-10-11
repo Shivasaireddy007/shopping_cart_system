@@ -1,6 +1,6 @@
 """Write the OpenAPI spec for the frontend's generated types and the API docs.
 
-    uv run python -m app.export_openapi ../docs/openapi.json
+uv run python -m app.export_openapi ../docs/openapi.json
 """
 
 import json
