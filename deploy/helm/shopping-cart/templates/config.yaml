@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "shop.name" . }}-config
+  labels: {{- include "shop.labels" . | nindent 4 }}
+  annotations:
+    # Created before the pre-install migration Job, which needs them. As hooks they are
+    # replaced on every upgrade and left in place by `helm uninstall`.
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "-5"
+    helm.sh/hook-delete-policy: before-hook-creation
+data:
+  ENVIRONMENT: production
+  REDIS_URL: {{ .Values.config.redisUrl | quote }}
+  SEARCH_URL: {{ .Values.config.searchUrl | quote }}
+  KAFKA_BOOTSTRAP_SERVERS: {{ .Values.config.kafkaBootstrapServers | quote }}
+  CORS_ORIGINS: {{ .Values.config.corsOrigins | quote }}
+  {{- with .Values.config.otelEndpoint }}
+  OTEL_EXPORTER_OTLP_ENDPOINT: {{ . | quote }}
+  {{- end }}
+{{- if .Values.secrets.create }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "shop.name" . }}-secrets
+  labels: {{- include "shop.labels" . | nindent 4 }}
+  annotations:
+    # Created before the pre-install migration Job, which needs them. As hooks they are
+    # replaced on every upgrade and left in place by `helm uninstall`.
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "-5"
+    helm.sh/hook-delete-policy: before-hook-creation
+type: Opaque
+stringData:
+  {{- range $key, $value := .Values.secrets.values }}
+  {{ $key }}: {{ $value | quote }}
+  {{- end }}
+{{- end }}

@@ -1,0 +1,53 @@
+{{- $sel := dict "root" . "component" "web" }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "shop.name" . }}-web
+  labels: {{- include "shop.labels" . | nindent 4 }}
+    app.kubernetes.io/component: web
+spec:
+  replicas: {{ .Values.web.replicas }}
+  selector:
+    matchLabels: {{- include "shop.selector" $sel | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "shop.selector" $sel | nindent 8 }}
+    spec:
+      {{- include "shop.podSecurity" . | nindent 6 }}
+      containers:
+        - name: web
+          image: "{{ .Values.image.web }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: API_UPSTREAM
+              value: "http://{{ include "shop.name" . }}-api:8000"
+          ports:
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            httpGet: { path: /, port: http }
+            periodSeconds: 5
+          livenessProbe:
+            httpGet: { path: /, port: http }
+            periodSeconds: 10
+          resources: {{- toYaml .Values.web.resources | nindent 12 }}
+          {{- include "shop.containerSecurity" . | nindent 10 }}
+          volumeMounts:
+            # nginx writes the rendered config and its temp files here.
+            - { name: conf, mountPath: /etc/nginx/conf.d }
+            - { name: tmp, mountPath: /tmp }
+      volumes:
+        - { name: conf, emptyDir: {} }
+        - { name: tmp, emptyDir: {} }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "shop.name" . }}-web
+  labels: {{- include "shop.labels" . | nindent 4 }}
+spec:
+  selector: {{- include "shop.selector" $sel | nindent 4 }}
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

@@ -1,0 +1,8 @@
+Shopping Cart is deploying as "{{ .Release.Name }}".
+
+  Shop:     https://{{ .Values.ingress.host }}
+  API docs: https://{{ .Values.ingress.host }}/api/v1 (OpenAPI at /docs on the API service)
+
+Seed demo data once:
+  kubectl exec deploy/{{ include "shop.name" . }}-api -- python -m app.seed --products 1000
+  kubectl create job --from=cronjob/{{ include "shop.name" . }}-reindex reindex-now

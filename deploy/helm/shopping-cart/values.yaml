@@ -1,0 +1,73 @@
+# PostgreSQL, Redis, OpenSearch and Kafka are expected to be managed services (or installed
+# separately); point the chart at them below. Secrets come from an existing Secret by default.
+
+image:
+  api: ghcr.io/shivasaireddy007/shopping-cart-api
+  web: ghcr.io/shivasaireddy007/shopping-cart-web
+  tag: "1.0.0"
+  pullPolicy: IfNotPresent
+
+config:
+  redisUrl: redis://redis:6379/0
+  searchUrl: http://opensearch:9200
+  kafkaBootstrapServers: kafka:9092
+  corsOrigins: '["https://shop.example.com"]'
+  otelEndpoint: ""        # e.g. http://otel-collector:4318; empty disables tracing
+
+# Keys: DATABASE_URL, JWT_SECRET, RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET, RAZORPAY_WEBHOOK_SECRET,
+# SHIPROCKET_EMAIL, SHIPROCKET_PASSWORD, SHIPROCKET_WEBHOOK_TOKEN.
+secrets:
+  existingSecret: shopping-cart-secrets
+  create: false           # true renders a Secret from `values` (for local clusters only)
+  values: {}
+
+api:
+  replicas: 2
+  resources:
+    requests: { cpu: 250m, memory: 256Mi }
+    limits: { memory: 512Mi }
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+
+web:
+  replicas: 2
+  resources:
+    requests: { cpu: 50m, memory: 32Mi }
+    limits: { memory: 128Mi }
+
+# Background processes, all from the API image.
+workers:
+  relay:
+    command: ["python", "-m", "app.events.relay"]
+    replicas: 1           # safe to raise: rows are claimed with SKIP LOCKED
+  search:
+    command: ["python", "-m", "app.events.handlers", "search"]
+    replicas: 1
+  shipping:
+    command: ["python", "-m", "app.events.handlers", "shipping"]
+    replicas: 1
+workerResources:
+  requests: { cpu: 50m, memory: 128Mi }
+  limits: { memory: 256Mi }
+
+cronJobs:
+  expire-orders:
+    schedule: "*/5 * * * *"
+    command: ["python", "-m", "app.jobs.expire_orders"]
+  warm-hot-products:
+    schedule: "*/5 * * * *"
+    command: ["python", "-m", "app.jobs.warm_hot_products"]
+  reindex:
+    schedule: "30 2 * * *"   # nightly; repairs anything the search consumer missed
+    command: ["python", "-m", "app.jobs.reindex"]
+
+ingress:
+  enabled: true
+  className: nginx
+  host: shop.example.com
+  tls:
+    secretName: shop-tls
+  annotations: {}

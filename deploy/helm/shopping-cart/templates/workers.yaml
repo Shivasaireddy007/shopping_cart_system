@@ -1,0 +1,34 @@
+{{- range $name, $worker := .Values.workers }}
+{{- $sel := dict "root" $ "component" (printf "worker-%s" $name) }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "shop.name" $ }}-{{ $name }}
+  labels: {{- include "shop.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: worker-{{ $name }}
+spec:
+  replicas: {{ $worker.replicas }}
+  selector:
+    matchLabels: {{- include "shop.selector" $sel | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "shop.selector" $sel | nindent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/config.yaml") $ | sha256sum }}
+    spec:
+      {{- include "shop.podSecurity" $ | nindent 6 }}
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: {{ $name }}
+          image: "{{ $.Values.image.api }}:{{ $.Values.image.tag }}"
+          imagePullPolicy: {{ $.Values.image.pullPolicy }}
+          command: {{- toYaml $worker.command | nindent 12 }}
+          {{- include "shop.appEnv" $ | nindent 10 }}
+          resources: {{- toYaml $.Values.workerResources | nindent 12 }}
+          {{- include "shop.containerSecurity" $ | nindent 10 }}
+          volumeMounts:
+            - { name: tmp, mountPath: /tmp }
+      volumes:
+        - { name: tmp, emptyDir: {} }
+{{- end }}
