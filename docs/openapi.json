@@ -1057,6 +1057,54 @@
         }
       }
     },
+    "/api/v1/orders/{number}/tracking": {
+      "get": {
+        "tags": [
+          "Checkout and orders"
+        ],
+        "summary": "Tracking",
+        "description": "Courier, AWB and tracking timeline for an order. The timeline is cached for 10 minutes.",
+        "operationId": "tracking_api_v1_orders__number__tracking_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrackingOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/admin/products": {
       "get": {
         "tags": [
@@ -1361,6 +1409,123 @@
         }
       }
     },
+    "/api/v1/admin/orders": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "List Orders",
+        "description": "All orders, newest first, with payment and shipment state.",
+        "operationId": "list_orders_api_v1_admin_orders_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 32
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_AdminOrderOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/shipments": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "List Shipments",
+        "description": "Shipments, most recently updated first.",
+        "operationId": "list_shipments_api_v1_admin_shipments_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_AdminShipmentOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/webhooks/razorpay": {
       "post": {
         "tags": [
@@ -1425,6 +1590,54 @@
         }
       }
     },
+    "/api/webhooks/shiprocket": {
+      "post": {
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Shiprocket Webhook",
+        "description": "Receive Shiprocket shipment status updates, authenticated with the `x-api-key` header.\n\nShiprocket sends no event id, so the AWB and status identify a delivery. Orders only\nmove forward (paid, shipped, delivered), so late or repeated updates change nothing.",
+        "operationId": "shiprocket_webhook_api_webhooks_shiprocket_post",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Shiprocket Webhook Api Webhooks Shiprocket Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "tags": [
@@ -1453,6 +1666,143 @@
   },
   "components": {
     "schemas": {
+      "AdminOrderOut": {
+        "properties": {
+          "number": {
+            "type": "string",
+            "title": "Number"
+          },
+          "customer_email": {
+            "type": "string",
+            "title": "Customer Email"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "payment_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Status"
+          },
+          "payment_method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Method"
+          },
+          "shipment_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shipment Status"
+          },
+          "awb_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Awb Code"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "number",
+          "customer_email",
+          "total",
+          "status",
+          "payment_status",
+          "payment_method",
+          "shipment_status",
+          "awb_code",
+          "created_at"
+        ],
+        "title": "AdminOrderOut"
+      },
+      "AdminShipmentOut": {
+        "properties": {
+          "order_number": {
+            "type": "string",
+            "title": "Order Number"
+          },
+          "awb_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Awb Code"
+          },
+          "courier_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Courier Name"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "status_updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "order_number",
+          "awb_code",
+          "courier_name",
+          "status",
+          "status_updated_at"
+        ],
+        "title": "AdminShipmentOut"
+      },
       "CartItemIn": {
         "properties": {
           "product_id": {
@@ -1831,6 +2181,68 @@
           "created_at"
         ],
         "title": "OrderOut"
+      },
+      "Page_AdminOrderOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AdminOrderOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "per_page": {
+            "type": "integer",
+            "title": "Per Page"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "per_page"
+        ],
+        "title": "Page[AdminOrderOut]"
+      },
+      "Page_AdminShipmentOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AdminShipmentOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "per_page": {
+            "type": "integer",
+            "title": "Per Page"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "per_page"
+        ],
+        "title": "Page[AdminShipmentOut]"
       },
       "Page_OrderOut_": {
         "properties": {
@@ -2538,6 +2950,92 @@
           "expires_in"
         ],
         "title": "TokenPair"
+      },
+      "TrackingEvent": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "title": "Date"
+          },
+          "activity": {
+            "type": "string",
+            "title": "Activity"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "activity"
+        ],
+        "title": "TrackingEvent"
+      },
+      "TrackingOut": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "courier_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Courier Name"
+          },
+          "awb_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Awb Code"
+          },
+          "track_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Track Url"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/TrackingEvent"
+            },
+            "type": "array",
+            "title": "Events"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "courier_name",
+          "awb_code",
+          "track_url",
+          "events"
+        ],
+        "title": "TrackingOut"
       },
       "UserOut": {
         "properties": {
