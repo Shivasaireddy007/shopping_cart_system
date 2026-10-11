@@ -6,6 +6,7 @@ import type { paths } from '../api/schema'
 import { useAuth } from '../stores/auth'
 
 export type ProductQuery = NonNullable<paths['/api/v1/products']['get']['parameters']['query']>
+export type SearchQuery = NonNullable<paths['/api/v1/search']['get']['parameters']['query']>
 
 export function useCategories() {
   return useQuery({
@@ -19,6 +20,14 @@ export function useProducts(query: ProductQuery) {
   return useQuery({
     queryKey: ['products', query],
     queryFn: () => unwrap(api.GET('/api/v1/products', { params: { query } })),
+    placeholderData: keepPreviousData,
+  })
+}
+
+export function useSearch(query: SearchQuery) {
+  return useQuery({
+    queryKey: ['search', query],
+    queryFn: () => unwrap(api.GET('/api/v1/search', { params: { query } })),
     placeholderData: keepPreviousData,
   })
 }
