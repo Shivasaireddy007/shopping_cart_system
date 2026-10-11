@@ -358,6 +358,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/orders/{number}/tracking": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Tracking
+         * @description Courier, AWB and tracking timeline for an order. The timeline is cached for 10 minutes.
+         */
+        get: operations["tracking_api_v1_orders__number__tracking_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/products": {
         parameters: {
             query?: never;
@@ -446,6 +466,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Orders
+         * @description All orders, newest first, with payment and shipment state.
+         */
+        get: operations["list_orders_api_v1_admin_orders_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/shipments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Shipments
+         * @description Shipments, most recently updated first.
+         */
+        get: operations["list_shipments_api_v1_admin_shipments_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/webhooks/razorpay": {
         parameters: {
             query?: never;
@@ -463,6 +523,29 @@ export interface paths {
          *     neither does and Razorpay's retry is processed. Repeated deliveries return `duplicate`.
          */
         post: operations["razorpay_webhook_api_webhooks_razorpay_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/webhooks/shiprocket": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Shiprocket Webhook
+         * @description Receive Shiprocket shipment status updates, authenticated with the `x-api-key` header.
+         *
+         *     Shiprocket sends no event id, so the AWB and status identify a delivery. Orders only
+         *     move forward (paid, shipped, delivered), so late or repeated updates change nothing.
+         */
+        post: operations["shiprocket_webhook_api_webhooks_shiprocket_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -490,6 +573,43 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AdminOrderOut */
+        AdminOrderOut: {
+            /** Number */
+            number: string;
+            /** Customer Email */
+            customer_email: string;
+            /** Total */
+            total: number;
+            /** Status */
+            status: string;
+            /** Payment Status */
+            payment_status: string | null;
+            /** Payment Method */
+            payment_method: string | null;
+            /** Shipment Status */
+            shipment_status: string | null;
+            /** Awb Code */
+            awb_code: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** AdminShipmentOut */
+        AdminShipmentOut: {
+            /** Order Number */
+            order_number: string;
+            /** Awb Code */
+            awb_code: string | null;
+            /** Courier Name */
+            courier_name: string | null;
+            /** Status */
+            status: string;
+            /** Status Updated At */
+            status_updated_at: string | null;
+        };
         /** CartItemIn */
         CartItemIn: {
             /** Product Id */
@@ -625,6 +745,28 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+        };
+        /** Page[AdminOrderOut] */
+        Page_AdminOrderOut_: {
+            /** Items */
+            items: components["schemas"]["AdminOrderOut"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Per Page */
+            per_page: number;
+        };
+        /** Page[AdminShipmentOut] */
+        Page_AdminShipmentOut_: {
+            /** Items */
+            items: components["schemas"]["AdminShipmentOut"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Per Page */
+            per_page: number;
         };
         /** Page[OrderOut] */
         Page_OrderOut_: {
@@ -862,6 +1004,28 @@ export interface components {
              * @description Access token lifetime in seconds
              */
             expires_in: number;
+        };
+        /** TrackingEvent */
+        TrackingEvent: {
+            /** Date */
+            date: string;
+            /** Activity */
+            activity: string;
+            /** Location */
+            location?: string | null;
+        };
+        /** TrackingOut */
+        TrackingOut: {
+            /** Status */
+            status: string;
+            /** Courier Name */
+            courier_name: string | null;
+            /** Awb Code */
+            awb_code: string | null;
+            /** Track Url */
+            track_url: string | null;
+            /** Events */
+            events: components["schemas"]["TrackingEvent"][];
         };
         /** UserOut */
         UserOut: {
@@ -1486,6 +1650,37 @@ export interface operations {
             };
         };
     };
+    tracking_api_v1_orders__number__tracking_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                number: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrackingOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_products_api_v1_admin_products_get: {
         parameters: {
             query?: {
@@ -1679,12 +1874,108 @@ export interface operations {
             };
         };
     };
+    list_orders_api_v1_admin_orders_get: {
+        parameters: {
+            query?: {
+                status?: string | null;
+                page?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_AdminOrderOut_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_shipments_api_v1_admin_shipments_get: {
+        parameters: {
+            query?: {
+                page?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_AdminShipmentOut_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     razorpay_webhook_api_webhooks_razorpay_post: {
         parameters: {
             query?: never;
             header?: {
                 "x-razorpay-signature"?: string;
                 "x-razorpay-event-id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    shiprocket_webhook_api_webhooks_shiprocket_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-api-key"?: string;
             };
             path?: never;
             cookie?: never;
