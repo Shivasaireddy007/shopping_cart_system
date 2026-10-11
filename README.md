@@ -229,6 +229,14 @@ npm run dev
 
 Demo logins: `demo@example.com` (customer) and `admin@example.com` (admin), password `demo-password`.
 
+### Free one-click demo
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Shivasaireddy007/shopping_cart_system)
+
+[`render.yaml`](render.yaml) deploys a single container (the API serving the web app) with free
+PostgreSQL and Redis. Kafka and OpenSearch don't fit the free plan, so search uses its PostgreSQL
+fallback and payments are simulated. CI builds that image and makes a purchase with it on every push.
+
 ### Public demo on a server
 
 [`deploy/demo/`](deploy/demo) runs the full stack on one Ubuntu server behind Caddy with automatic
