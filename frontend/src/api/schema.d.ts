@@ -547,6 +547,49 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/system/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Stats
+         * @description Live numbers from this server: latency of recent API requests, cache hit rate, checkout
+         *     outcomes and the latest events written to the outbox.
+         */
+        get: operations["stats_api_v1_system_stats_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/system/oversell-experiment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Oversell Experiment Run
+         * @description Public demo only: ten buyers check out the last three units at the same moment, on
+         *     separate database connections. With `locked=true` the real checkout runs; with `false`, a
+         *     naive read-then-write version shows the race the lock prevents.
+         */
+        post: operations["oversell_experiment_run_api_v1_system_oversell_experiment_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/webhooks/razorpay": {
         parameters: {
             query?: never;
@@ -674,6 +717,21 @@ export interface components {
             /** Status Updated At */
             status_updated_at: string | null;
         };
+        /** CacheStats */
+        CacheStats: {
+            /**
+             * Hits
+             * @default 0
+             */
+            hits?: number;
+            /**
+             * Misses
+             * @default 0
+             */
+            misses?: number;
+            /** Hit Rate */
+            hit_rate?: number | null;
+        };
         /** CartItemIn */
         CartItemIn: {
             /** Product Id */
@@ -789,6 +847,30 @@ export interface components {
             /** Orders */
             orders: number;
         };
+        /** ExperimentAttempt */
+        ExperimentAttempt: {
+            /** Buyer */
+            buyer: number;
+            /** Sold */
+            sold: boolean;
+            /** Ms */
+            ms: number;
+        };
+        /** ExperimentOut */
+        ExperimentOut: {
+            /** Locked */
+            locked: boolean;
+            /** Units */
+            units: number;
+            /** Attempts */
+            attempts: components["schemas"]["ExperimentAttempt"][];
+            /** Sold */
+            sold: number;
+            /** Final Stock */
+            final_stock: number;
+            /** Ms */
+            ms: number;
+        };
         /** Facet */
         Facet: {
             /** Value */
@@ -809,6 +891,18 @@ export interface components {
             name: string;
             /** Views */
             views: number;
+        };
+        /** LatencyStats */
+        LatencyStats: {
+            /**
+             * Requests
+             * @default 0
+             */
+            requests?: number;
+            /** P50 Ms */
+            p50_ms?: number | null;
+            /** P95 Ms */
+            p95_ms?: number | null;
         };
         /** LoginIn */
         LoginIn: {
@@ -1031,6 +1125,18 @@ export interface components {
             /** Currency */
             currency: string;
         };
+        /** RecentEvent */
+        RecentEvent: {
+            /** Topic */
+            topic: string;
+            /** Event Type */
+            event_type: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
         /** RefreshIn */
         RefreshIn: {
             /** Refresh Token */
@@ -1112,6 +1218,38 @@ export interface components {
             sku: string;
             /** Stock */
             stock: number;
+        };
+        /**
+         * SystemStats
+         * @description Live numbers from this server, for the How it's built page.
+         */
+        SystemStats: {
+            /** Uptime Seconds */
+            uptime_seconds: number;
+            /** Commit */
+            commit: string | null;
+            /** Python */
+            python: string;
+            /** Postgres */
+            postgres: string;
+            /** Redis */
+            redis: string | null;
+            /** Demo */
+            demo: boolean;
+            latency: components["schemas"]["LatencyStats"];
+            cache: components["schemas"]["CacheStats"];
+            /** Checkouts */
+            checkouts: {
+                [key: string]: number;
+            };
+            /** Products */
+            products: number;
+            /** Orders */
+            orders: number;
+            /** Outbox Events */
+            outbox_events: number;
+            /** Recent Events */
+            recent_events: components["schemas"]["RecentEvent"][];
         };
         /** TokenPair */
         TokenPair: {
@@ -2110,6 +2248,72 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["DashboardOut"];
                 };
+            };
+        };
+    };
+    stats_api_v1_system_stats_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SystemStats"];
+                };
+            };
+        };
+    };
+    oversell_experiment_run_api_v1_system_oversell_experiment_post: {
+        parameters: {
+            query?: {
+                /** @description Use the real, row-locking checkout */
+                locked?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExperimentOut"];
+                };
+            };
+            /** @description Not a demo server */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description One is already running */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

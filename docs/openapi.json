@@ -1601,6 +1601,80 @@
         ]
       }
     },
+    "/api/v1/system/stats": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Stats",
+        "description": "Live numbers from this server: latency of recent API requests, cache hit rate, checkout\noutcomes and the latest events written to the outbox.",
+        "operationId": "stats_api_v1_system_stats_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemStats"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/system/oversell-experiment": {
+      "post": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Oversell Experiment Run",
+        "description": "Public demo only: ten buyers check out the last three units at the same moment, on\nseparate database connections. With `locked=true` the real checkout runs; with `false`, a\nnaive read-then-write version shows the race the lock prevents.",
+        "operationId": "oversell_experiment_run_api_v1_system_oversell_experiment_post",
+        "parameters": [
+          {
+            "name": "locked",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Use the real, row-locking checkout",
+              "default": true,
+              "title": "Locked"
+            },
+            "description": "Use the real, row-locking checkout"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentOut"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not a demo server"
+          },
+          "429": {
+            "description": "One is already running"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/webhooks/razorpay": {
       "post": {
         "tags": [
@@ -1902,6 +1976,33 @@
         ],
         "title": "AdminShipmentOut"
       },
+      "CacheStats": {
+        "properties": {
+          "hits": {
+            "type": "integer",
+            "title": "Hits",
+            "default": 0
+          },
+          "misses": {
+            "type": "integer",
+            "title": "Misses",
+            "default": 0
+          },
+          "hit_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hit Rate"
+          }
+        },
+        "type": "object",
+        "title": "CacheStats"
+      },
       "CartItemIn": {
         "properties": {
           "product_id": {
@@ -2196,6 +2297,70 @@
         ],
         "title": "DayRevenue"
       },
+      "ExperimentAttempt": {
+        "properties": {
+          "buyer": {
+            "type": "integer",
+            "title": "Buyer"
+          },
+          "sold": {
+            "type": "boolean",
+            "title": "Sold"
+          },
+          "ms": {
+            "type": "number",
+            "title": "Ms"
+          }
+        },
+        "type": "object",
+        "required": [
+          "buyer",
+          "sold",
+          "ms"
+        ],
+        "title": "ExperimentAttempt"
+      },
+      "ExperimentOut": {
+        "properties": {
+          "locked": {
+            "type": "boolean",
+            "title": "Locked"
+          },
+          "units": {
+            "type": "integer",
+            "title": "Units"
+          },
+          "attempts": {
+            "items": {
+              "$ref": "#/components/schemas/ExperimentAttempt"
+            },
+            "type": "array",
+            "title": "Attempts"
+          },
+          "sold": {
+            "type": "integer",
+            "title": "Sold"
+          },
+          "final_stock": {
+            "type": "integer",
+            "title": "Final Stock"
+          },
+          "ms": {
+            "type": "number",
+            "title": "Ms"
+          }
+        },
+        "type": "object",
+        "required": [
+          "locked",
+          "units",
+          "attempts",
+          "sold",
+          "final_stock",
+          "ms"
+        ],
+        "title": "ExperimentOut"
+      },
       "Facet": {
         "properties": {
           "value": {
@@ -2249,6 +2414,39 @@
           "views"
         ],
         "title": "HotProduct"
+      },
+      "LatencyStats": {
+        "properties": {
+          "requests": {
+            "type": "integer",
+            "title": "Requests",
+            "default": 0
+          },
+          "p50_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P50 Ms"
+          },
+          "p95_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P95 Ms"
+          }
+        },
+        "type": "object",
+        "title": "LatencyStats"
       },
       "LoginIn": {
         "properties": {
@@ -2919,6 +3117,30 @@
         "title": "RazorpayCheckout",
         "description": "Everything the frontend needs to open Razorpay Checkout."
       },
+      "RecentEvent": {
+        "properties": {
+          "topic": {
+            "type": "string",
+            "title": "Topic"
+          },
+          "event_type": {
+            "type": "string",
+            "title": "Event Type"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "topic",
+          "event_type",
+          "created_at"
+        ],
+        "title": "RecentEvent"
+      },
       "RefreshIn": {
         "properties": {
           "refresh_token": {
@@ -3151,6 +3373,98 @@
           "stock"
         ],
         "title": "StockAlert"
+      },
+      "SystemStats": {
+        "properties": {
+          "uptime_seconds": {
+            "type": "integer",
+            "title": "Uptime Seconds"
+          },
+          "commit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Commit"
+          },
+          "python": {
+            "type": "string",
+            "title": "Python"
+          },
+          "postgres": {
+            "type": "string",
+            "title": "Postgres"
+          },
+          "redis": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Redis"
+          },
+          "demo": {
+            "type": "boolean",
+            "title": "Demo"
+          },
+          "latency": {
+            "$ref": "#/components/schemas/LatencyStats"
+          },
+          "cache": {
+            "$ref": "#/components/schemas/CacheStats"
+          },
+          "checkouts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Checkouts"
+          },
+          "products": {
+            "type": "integer",
+            "title": "Products"
+          },
+          "orders": {
+            "type": "integer",
+            "title": "Orders"
+          },
+          "outbox_events": {
+            "type": "integer",
+            "title": "Outbox Events"
+          },
+          "recent_events": {
+            "items": {
+              "$ref": "#/components/schemas/RecentEvent"
+            },
+            "type": "array",
+            "title": "Recent Events"
+          }
+        },
+        "type": "object",
+        "required": [
+          "uptime_seconds",
+          "commit",
+          "python",
+          "postgres",
+          "redis",
+          "demo",
+          "latency",
+          "cache",
+          "checkouts",
+          "products",
+          "orders",
+          "outbox_events",
+          "recent_events"
+        ],
+        "title": "SystemStats",
+        "description": "Live numbers from this server, for the How it's built page."
       },
       "TokenPair": {
         "properties": {
