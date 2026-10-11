@@ -118,6 +118,20 @@ class CatalogCache:
             _, ids, _ = await pipe.execute()
         return [int(i) for i in ids]
 
+    async def view_counts(self, product_ids: list[int], hours: int = 24) -> dict[int, int]:
+        """Views per product over the last `hours` hours."""
+        now = datetime.now(UTC)
+        keys = [VIEWS_PREFIX + (now - timedelta(hours=h)).strftime("%Y%m%d%H") for h in range(hours)]
+        async with self.redis.pipeline(transaction=False) as pipe:
+            for key in keys:
+                pipe.zmscore(key, [str(i) for i in product_ids])
+            rows = await pipe.execute()
+        totals = dict.fromkeys(product_ids, 0)
+        for scores in rows:
+            for product_id, score in zip(product_ids, scores, strict=True):
+                totals[product_id] += int(score or 0)
+        return totals
+
     async def _set(self, key: str, value: str, ttl: int) -> None:
         try:
             await self.redis.set(key, value, ex=ttl)

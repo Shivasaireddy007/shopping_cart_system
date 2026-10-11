@@ -6,11 +6,13 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
 
 from app.api.deps import CurrentAdmin, SessionDep
+from app.api.routes.catalog import CacheDep
 from app.core.text import slugify, unique_slug
 from app.models import Category, Order, Payment, Product, Shipment, User
 from app.schemas.catalog import CategoryCreate, CategoryOut, ProductCreate, ProductOut, ProductUpdate
 from app.schemas.common import Page
-from app.schemas.orders import AdminOrderOut, AdminShipmentOut
+from app.schemas.orders import AdminOrderOut, AdminShipmentOut, DashboardOut
+from app.services import dashboard
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
@@ -209,3 +211,9 @@ async def list_shipments(
         for s, number in rows
     ]
     return Page(items=items, total=total, page=page, per_page=PER_PAGE)
+
+
+@router.get("/dashboard")
+async def get_dashboard(_: CurrentAdmin, session: SessionDep, cache: CacheDep) -> DashboardOut:
+    """Today's orders and revenue, what needs shipping, 7-day revenue, low stock and hot products."""
+    return await dashboard.build(session, cache)

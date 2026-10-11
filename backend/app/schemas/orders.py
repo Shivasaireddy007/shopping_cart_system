@@ -104,3 +104,32 @@ class AdminShipmentOut(BaseModel):
     courier_name: str | None
     status: str
     status_updated_at: datetime | None
+
+
+class DayRevenue(BaseModel):
+    date: str = Field(description="YYYY-MM-DD in India time")
+    revenue: int = Field(description="Paid order totals in paise")
+    orders: int
+
+
+class StockAlert(BaseModel):
+    id: int
+    name: str
+    sku: str
+    stock: int
+
+
+class HotProduct(BaseModel):
+    id: int
+    name: str
+    views: int
+
+
+class DashboardOut(BaseModel):
+    orders_today: int
+    revenue_today: int
+    to_ship: int = Field(description="Paid orders not yet shipped")
+    failed_payments_today: int
+    revenue_by_day: list[DayRevenue] = Field(description="Last 7 days, oldest first")
+    low_stock: list[StockAlert]
+    hot_products: list[HotProduct] = Field(description="Most viewed in the last 24 hours")

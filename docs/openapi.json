@@ -1526,6 +1526,33 @@
         }
       }
     },
+    "/api/v1/admin/dashboard": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Get Dashboard",
+        "description": "Today's orders and revenue, what needs shipping, 7-day revenue, low stock and hot products.",
+        "operationId": "get_dashboard_api_v1_admin_dashboard_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/webhooks/razorpay": {
       "post": {
         "tags": [
@@ -2017,6 +2044,86 @@
         ],
         "title": "CheckoutOut"
       },
+      "DashboardOut": {
+        "properties": {
+          "orders_today": {
+            "type": "integer",
+            "title": "Orders Today"
+          },
+          "revenue_today": {
+            "type": "integer",
+            "title": "Revenue Today"
+          },
+          "to_ship": {
+            "type": "integer",
+            "title": "To Ship",
+            "description": "Paid orders not yet shipped"
+          },
+          "failed_payments_today": {
+            "type": "integer",
+            "title": "Failed Payments Today"
+          },
+          "revenue_by_day": {
+            "items": {
+              "$ref": "#/components/schemas/DayRevenue"
+            },
+            "type": "array",
+            "title": "Revenue By Day",
+            "description": "Last 7 days, oldest first"
+          },
+          "low_stock": {
+            "items": {
+              "$ref": "#/components/schemas/StockAlert"
+            },
+            "type": "array",
+            "title": "Low Stock"
+          },
+          "hot_products": {
+            "items": {
+              "$ref": "#/components/schemas/HotProduct"
+            },
+            "type": "array",
+            "title": "Hot Products",
+            "description": "Most viewed in the last 24 hours"
+          }
+        },
+        "type": "object",
+        "required": [
+          "orders_today",
+          "revenue_today",
+          "to_ship",
+          "failed_payments_today",
+          "revenue_by_day",
+          "low_stock",
+          "hot_products"
+        ],
+        "title": "DashboardOut"
+      },
+      "DayRevenue": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "title": "Date",
+            "description": "YYYY-MM-DD in India time"
+          },
+          "revenue": {
+            "type": "integer",
+            "title": "Revenue",
+            "description": "Paid order totals in paise"
+          },
+          "orders": {
+            "type": "integer",
+            "title": "Orders"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "revenue",
+          "orders"
+        ],
+        "title": "DayRevenue"
+      },
       "Facet": {
         "properties": {
           "value": {
@@ -2047,6 +2154,29 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "HotProduct": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "views": {
+            "type": "integer",
+            "title": "Views"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "views"
+        ],
+        "title": "HotProduct"
       },
       "LoginIn": {
         "properties": {
@@ -2921,6 +3051,34 @@
           "pincode"
         ],
         "title": "ShippingAddress"
+      },
+      "StockAlert": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "sku": {
+            "type": "string",
+            "title": "Sku"
+          },
+          "stock": {
+            "type": "integer",
+            "title": "Stock"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "sku",
+          "stock"
+        ],
+        "title": "StockAlert"
       },
       "TokenPair": {
         "properties": {
