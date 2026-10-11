@@ -229,6 +229,11 @@ npm run dev
 
 Demo logins: `demo@example.com` (customer) and `admin@example.com` (admin), password `demo-password`.
 
+### Public demo on a server
+
+[`deploy/demo/`](deploy/demo) runs the full stack on one Ubuntu server behind Caddy with automatic
+HTTPS, set up with a single script that CI tests on every push.
+
 ## Kubernetes
 
 ```bash
