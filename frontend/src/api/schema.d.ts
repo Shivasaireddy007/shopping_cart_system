@@ -113,7 +113,7 @@ export interface paths {
         };
         /**
          * List Products
-         * @description List active products, filtered by category, brand, price (paise) and stock.
+         * @description List active products, filtered by category, brand, price (paise) and stock. Cached in Redis.
          */
         get: operations["list_products_api_v1_products_get"];
         put?: never;
@@ -133,9 +133,32 @@ export interface paths {
         };
         /**
          * Get Product
-         * @description Get an active product by its slug.
+         * @description Get an active product by its slug. Cached in Redis; each request counts as a view.
          */
         get: operations["get_product_api_v1_products__slug__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Search
+         * @description Full-text search with brand, category, colour, size and price facets.
+         *
+         *     Each facet's counts ignore its own selection, so other options stay visible. If the
+         *     search engine is unavailable, falls back to database filtering with `facets: null`.
+         */
+        get: operations["search_api_v1_search_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -541,6 +564,13 @@ export interface components {
             order: components["schemas"]["OrderOut"];
             razorpay: components["schemas"]["RazorpayCheckout"];
         };
+        /** Facet */
+        Facet: {
+            /** Value */
+            value: string;
+            /** Count */
+            count: number;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -762,6 +792,34 @@ export interface components {
             /** Password */
             password: string;
         };
+        /** SearchOut */
+        SearchOut: {
+            /** Items */
+            items: components["schemas"]["ProductOut"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Per Page */
+            per_page: number;
+            /**
+             * Facets
+             * @description None when search fell back to the database
+             */
+            facets: {
+                [key: string]: components["schemas"]["Facet"][];
+            } | null;
+            /**
+             * Engine
+             * @description "opensearch", or "database" if the search engine was unavailable
+             */
+            engine: string;
+        };
+        /**
+         * SearchSort
+         * @enum {string}
+         */
+        SearchSort: "relevance" | "newest" | "price_asc" | "price_desc";
         /** ShippingAddress */
         ShippingAddress: {
             /** Name */
@@ -1043,6 +1101,49 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProductOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    search_api_v1_search_get: {
+        parameters: {
+            query?: {
+                q?: string | null;
+                brand?: string[];
+                category?: string[];
+                color?: string[];
+                size?: string[];
+                /** @description In paise */
+                min_price?: number | null;
+                /** @description In paise */
+                max_price?: number | null;
+                in_stock?: boolean;
+                sort?: components["schemas"]["SearchSort"];
+                page?: number;
+                per_page?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchOut"];
                 };
             };
             /** @description Validation Error */
