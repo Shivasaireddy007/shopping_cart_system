@@ -1,9 +1,14 @@
+import hashlib
+import hmac
+import json
 import os
+import secrets
 from collections.abc import AsyncIterator
 from typing import Any
 
 os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://postgres@127.0.0.1:5432/shop_test")
 
+import httpx
 import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession, create_async_engine
@@ -13,7 +18,8 @@ from app.core.config import get_settings
 from app.core.security import create_token, hash_password
 from app.db import Base, get_session
 from app.main import app
-from app.models import Category, Product, User
+from app.models import Cart, CartItem, Category, Product, User
+from app.services.razorpay import RazorpayClient, get_razorpay
 
 _PASSWORD_HASH = hash_password("password123")
 
@@ -44,12 +50,51 @@ async def session(connection: AsyncConnection) -> AsyncIterator[AsyncSession]:
         await transaction.rollback()
 
 
+class FakeRazorpay:
+    """Razorpay's Orders API on an in-memory transport, with test credentials."""
+
+    key_secret = "test-key-secret"
+    webhook_secret = "test-webhook-secret"
+
+    def __init__(self) -> None:
+        self.fail = False
+        self.created: list[dict[str, Any]] = []
+        settings = get_settings().model_copy(
+            update={
+                "razorpay_key_id": "rzp_test_key",
+                "razorpay_key_secret": self.key_secret,
+                "razorpay_webhook_secret": self.webhook_secret,
+            }
+        )
+        self.client = RazorpayClient(settings, transport=httpx.MockTransport(self._handle))
+
+    def _handle(self, request: httpx.Request) -> httpx.Response:
+        if self.fail:
+            return httpx.Response(500, json={"error": {"description": "unavailable"}})
+        body = json.loads(request.content)
+        self.created.append(body)
+        return httpx.Response(200, json={"id": f"order_{secrets.token_hex(7)}", **body})
+
+    def payment_signature(self, razorpay_order_id: str, payment_id: str) -> str:
+        message = f"{razorpay_order_id}|{payment_id}".encode()
+        return hmac.new(self.key_secret.encode(), message, hashlib.sha256).hexdigest()
+
+    def webhook_signature(self, body: bytes) -> str:
+        return hmac.new(self.webhook_secret.encode(), body, hashlib.sha256).hexdigest()
+
+
 @pytest.fixture
-async def client(session: AsyncSession) -> AsyncIterator[AsyncClient]:
+def razorpay() -> FakeRazorpay:
+    return FakeRazorpay()
+
+
+@pytest.fixture
+async def client(session: AsyncSession, razorpay: FakeRazorpay) -> AsyncIterator[AsyncClient]:
     async def override() -> AsyncIterator[AsyncSession]:
         yield session
 
     app.dependency_overrides[get_session] = override
+    app.dependency_overrides[get_razorpay] = lambda: razorpay.client
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as http:
         yield http
     app.dependency_overrides.clear()
@@ -104,6 +149,15 @@ class Factory:
         await self.session.flush()
         return product
 
+    async def cart_with(self, user: User, *lines: tuple[Product, int]) -> Cart:
+        cart = Cart(user_id=user.id)
+        self.session.add(cart)
+        await self.session.flush()
+        for product, quantity in lines:
+            self.session.add(CartItem(cart_id=cart.id, product_id=product.id, quantity=quantity))
+        await self.session.flush()
+        return cart
+
 
 @pytest.fixture
 def factory(session: AsyncSession) -> Factory:
@@ -112,3 +166,13 @@ def factory(session: AsyncSession) -> Factory:
 
 def auth_header(user: User) -> dict[str, str]:
     return {"Authorization": f"Bearer {create_token(user.id, 'access')}"}
+
+
+ADDRESS = {
+    "name": "Asha Rao",
+    "phone": "9876543210",
+    "line1": "12 MG Road",
+    "city": "Bengaluru",
+    "state": "Karnataka",
+    "pincode": "560001",
+}
