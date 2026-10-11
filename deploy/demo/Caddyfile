@@ -1,0 +1,5 @@
+# HTTPS for the demo domain; Caddy requests and renews the certificate itself.
+{$DOMAIN} {
+	encode gzip
+	reverse_proxy web:8080
+}

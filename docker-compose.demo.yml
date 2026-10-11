@@ -1,0 +1,70 @@
+# The public demo: the whole stack on one server behind Caddy, which gets an HTTPS certificate
+# automatically. Set up with deploy/demo/setup.sh, which writes .env (DOMAIN, JWT_SECRET and the
+# Razorpay test keys) and then runs:
+#   docker compose -f docker-compose.yml -f docker-compose.demo.yml up -d --build
+x-demo: &demo
+  environment:
+    CORS_ORIGINS: '["https://${DOMAIN:?set DOMAIN in .env}"]'
+    JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+    # Shiprocket only signs up registered businesses, so the demo ships through the stand-in.
+    SHIPROCKET_EMAIL: demo@example.com
+    SHIPROCKET_PASSWORD: demo
+    SHIPROCKET_WEBHOOK_TOKEN: ${SHIPROCKET_WEBHOOK_TOKEN:-demo-webhook-token}
+    SHIPROCKET_BASE_URL: http://stubs:8090/shiprocket
+  restart: always
+
+services:
+  caddy:
+    image: caddy:2.10-alpine
+    environment:
+      DOMAIN: ${DOMAIN}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/demo/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy:/data
+    depends_on:
+      - web
+    restart: always
+
+  stubs:
+    image: python:3.12-alpine
+    command: ["python", "/stub/payment_shipping_stub.py"]
+    volumes:
+      - ./e2e:/stub:ro
+    restart: always
+
+  # Only Caddy is reachable from outside; everything else stays on the Compose network.
+  api:
+    <<: *demo
+    ports: !reset []
+  relay: *demo
+  search-worker: *demo
+  shipping-worker: *demo
+
+  web:
+    build:
+      context: ./frontend
+      args:
+        VITE_DEMO_NOTICE: >-
+          Live demo: pay with Razorpay test mode (UPI ID success@razorpay). Shipping is simulated.
+          Data resets every night.
+    ports: !reset []
+    restart: always
+
+  jaeger:
+    ports: !reset []
+    restart: always
+
+  postgres:
+    restart: always
+  redis:
+    restart: always
+  opensearch:
+    restart: always
+  kafka:
+    restart: always
+
+volumes:
+  caddy:
