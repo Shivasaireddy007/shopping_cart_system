@@ -6,7 +6,10 @@ import { createRoot } from 'react-dom/client'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 
 import { Layout } from './components/Layout'
+import { AdminLayout } from './pages/admin/AdminLayout'
+import { AdminOrders } from './pages/admin/AdminOrders'
 import { AdminProducts } from './pages/admin/AdminProducts'
+import { AdminShipments } from './pages/admin/AdminShipments'
 import { ProductForm } from './pages/admin/ProductForm'
 import { RequireAdmin } from './pages/admin/RequireAdmin'
 import { LoginPage, RegisterPage } from './pages/AuthPages'
@@ -40,7 +43,14 @@ const router = createBrowserRouter([
         path: '/admin',
         element: <RequireAdmin />,
         children: [
-          { index: true, element: <AdminProducts /> },
+          {
+            element: <AdminLayout />,
+            children: [
+              { index: true, element: <AdminProducts /> },
+              { path: 'orders', element: <AdminOrders /> },
+              { path: 'shipments', element: <AdminShipments /> },
+            ],
+          },
           { path: 'products/:id', element: <ProductForm /> },
         ],
       },
