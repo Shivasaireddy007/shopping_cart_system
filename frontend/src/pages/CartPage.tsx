@@ -63,9 +63,9 @@ export function CartPage() {
           <span className={cart.shipping_fee === 0 ? 'font-semibold text-good' : ''}>{cart.shipping_fee === 0 ? 'Free' : formatPaise(cart.shipping_fee)}</span>
         </div>
         <div className="mt-1 flex justify-between border-t border-line pt-2 text-lg font-bold"><span>Total</span><span>{formatPaise(cart.total)}</span></div>
-        <button type="button" disabled className="mt-2 rounded-lg bg-brand px-4 py-2.5 font-semibold text-white opacity-60" title="Checkout arrives with the Razorpay integration">
-          Checkout (coming soon)
-        </button>
+        <Link to="/checkout" className="mt-2 rounded-lg bg-brand px-4 py-2.5 text-center font-semibold text-white hover:bg-brand-dark">
+          Checkout
+        </Link>
         <p className="text-xs text-muted">Orders under ₹999 pay ₹49 shipping.</p>
       </aside>
     </div>
