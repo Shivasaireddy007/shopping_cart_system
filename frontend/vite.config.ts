@@ -11,6 +11,8 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
+    // Playwright's end-to-end tests live in e2e/ and run against a full stack.
+    exclude: ['e2e/**', 'node_modules/**'],
     // Node can't build requests from relative URLs, so tests use an absolute API address.
     env: { VITE_API_URL: 'http://localhost' },
   },
