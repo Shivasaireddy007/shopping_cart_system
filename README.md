@@ -3,8 +3,8 @@
 [![ci](https://github.com/Shivasaireddy007/shopping_cart_system/actions/workflows/ci.yml/badge.svg)](https://github.com/Shivasaireddy007/shopping_cart_system/actions/workflows/ci.yml)
 
 A full-stack e-commerce app: a **React + TypeScript** storefront and admin panel on a
-**FastAPI** backend with **PostgreSQL**: Razorpay payments, OpenSearch faceted search and Redis
-caching. Prices are in rupees; Shiprocket shipping is on the roadmap.
+**FastAPI** backend with **PostgreSQL**: Razorpay payments, Shiprocket shipping driven by **Kafka**
+events through a transactional outbox, OpenSearch faceted search and Redis caching. Prices are in rupees.
 
 ![Search for "runing shoes" (typo) with the Nike facet ticked; other brands keep their counts](docs/images/search.png)
 
@@ -20,9 +20,17 @@ caching. Prices are in rupees; Shiprocket shipping is on the roadmap.
 |---|---|
 | ![Delivery address form with order summary](docs/images/checkout.png) | ![Paid order with items, payment and address](docs/images/order-confirmation.png) |
 
-| Admin: products | Admin: edit product |
+| Shipment tracking | Admin: orders |
 |---|---|
-| ![Admin product list with stock and status](docs/images/admin-products.png) | ![Admin product form](docs/images/admin-edit-product.png) |
+| ![Order shipped with Delhivery, AWB and courier timeline](docs/images/order-tracking.png) | ![Admin orders with payment, status and AWB](docs/images/admin-orders.png) |
+
+| Admin: shipments | Admin: products |
+|---|---|
+| ![Admin shipments with courier status](docs/images/admin-shipments.png) | ![Admin product list with stock and status](docs/images/admin-products.png) |
+
+| Admin: edit product | |
+|---|---|
+| ![Admin product form](docs/images/admin-edit-product.png) | |
 
 ## Status
 
@@ -33,8 +41,8 @@ The project is built in stages. Each stage is complete and tested before the nex
 | 1 | Catalog, cart, JWT auth, admin products, React storefront and admin, CI | ✅ Done |
 | 2 | Checkout with row-locked stock reservation, Razorpay payments and signed webhooks | ✅ Done |
 | 3 | Redis caching for hot products, OpenSearch faceted search | ✅ Done |
-| 4 | Kafka order events with the transactional outbox pattern, Shiprocket shipping | Next |
-| 5 | Docker and Kubernetes (Helm), observability, k6 load tests, live demo | Planned |
+| 4 | Kafka order events with the transactional outbox pattern, Shiprocket shipping | ✅ Done |
+| 5 | Docker and Kubernetes (Helm), observability, k6 load tests, live demo | Next |
 
 ## Tech stack
 
@@ -47,7 +55,19 @@ The project is built in stages. Each stage is complete and tested before the nex
 | Quality | pytest, Vitest + Testing Library, ruff, mypy (strict), oxlint, GitHub Actions |
 | Payments | Razorpay Orders API, Razorpay Checkout, HMAC-signed webhooks |
 | Search and cache | OpenSearch 3, Redis |
-| Planned | Kafka, Shiprocket, Docker, Kubernetes, Playwright, k6 |
+| Events and shipping | Kafka (aiokafka), transactional outbox, Shiprocket API and webhooks |
+| Planned | Docker, Kubernetes, Playwright, k6 |
+
+## Event flow
+
+```mermaid
+flowchart LR
+    API[FastAPI request] -->|"same transaction"| DB[(PostgreSQL<br/>+ outbox_events)]
+    DB -->|"relay: FOR UPDATE SKIP LOCKED"| K{{Kafka}}
+    K -->|order.paid| SHIP[shipping consumer] --> SR[Shiprocket]
+    K -->|product.changed| IDX[search consumer] --> OS[(OpenSearch)]
+    SR -->|status webhook| API
+```
 
 ## Design decisions
 
@@ -78,6 +98,17 @@ The project is built in stages. Each stage is complete and tested before the nex
   listing without scanning keys. If Redis is down, pages are served uncached.
 - **Hot products stay warm.** Product views are counted in hourly Redis sorted sets; a job caches the top
   100 of the last 24 hours with a longer TTL.
+- **Events that can't be lost or invented.** Order and product events are written to an `outbox_events`
+  table in the same transaction as the change. A relay publishes them to Kafka with an idempotent
+  producer, claiming rows with `FOR UPDATE SKIP LOCKED` so several relays can run safely. A crash after
+  commit can't lose an event, and a rollback can't publish one.
+- **Once-only consumers.** Kafka delivers at least once, so each consumer records handled event ids in
+  the same transaction as its effect, retries with backoff, and parks failures on a `.dlq` topic. Events
+  are keyed by order number or product id, which keeps each entity's events in order. A product rename
+  reaches OpenSearch through this pipeline in about a third of a second.
+- **Resumable shipping.** The shipping consumer saves each Shiprocket step as it succeeds, so a retry
+  after a courier-assignment failure continues instead of creating a duplicate shipment. Courier webhooks
+  are token-checked, de-duplicated, and only ever move an order forward (paid → shipped → delivered).
 - **Abandoned checkouts release stock.** Unpaid orders are cancelled after 30 minutes by a job
   (`python -m app.jobs.expire_orders`), which returns their stock.
 
@@ -118,14 +149,17 @@ The project is built in stages. Each stage is complete and tested before the nex
 | POST | `/api/v1/orders/{number}/verify-payment` | JWT | Confirm payment with Razorpay's signature |
 | POST | `/api/v1/orders/{number}/payment` | JWT | Get Razorpay details again to pay later |
 | POST | `/api/v1/orders/{number}/cancel` | JWT | Cancel an unpaid order and release its stock |
+| GET | `/api/v1/orders/{number}/tracking` | JWT | Courier, AWB and tracking timeline (cached) |
+| GET | `/api/v1/admin/orders`, `/api/v1/admin/shipments` | Admin | Orders with payment and shipment state; shipments |
 | POST | `/api/webhooks/razorpay` | Signature | Payment captured or failed |
+| POST | `/api/webhooks/shiprocket` | Token | Courier status updates |
 
 With the backend running, interactive docs are at [`/docs`](http://127.0.0.1:8000/docs).
 
 ## Running locally
 
-You need Python 3.12 with [uv](https://docs.astral.sh/uv/), Node.js 22+, PostgreSQL, Redis and
-OpenSearch (`SEARCH_URL`, default `http://127.0.0.1:9200`).
+You need Python 3.12 with [uv](https://docs.astral.sh/uv/), Node.js 22+, PostgreSQL, Redis,
+OpenSearch (`SEARCH_URL`) and Kafka (`KAFKA_BOOTSTRAP_SERVERS`).
 
 ```bash
 # Backend: http://127.0.0.1:8000
@@ -136,6 +170,11 @@ uv run alembic upgrade head
 uv run python -m app.seed --products 1000
 uv run python -m app.jobs.reindex        # needs OpenSearch; search falls back to PostgreSQL without it
 uv run uvicorn app.main:app --reload
+
+# Background workers, each in its own terminal
+uv run python -m app.events.relay              # outbox -> Kafka
+uv run python -m app.events.handlers search    # product.changed -> OpenSearch
+uv run python -m app.events.handlers shipping  # order.paid -> Shiprocket
 ```
 
 For payments, create Razorpay **test mode** keys and set `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`
@@ -169,13 +208,7 @@ cd frontend && npm run api:types
 
 Design mockups for the stages still to come. They'll be replaced with screenshots once built.
 
-| Admin shipments (stage 4) | Order tracking (stage 4) |
-|---|---|
-| ![Shipments with courier status](docs/images/planned-admin-shipments.png) | ![Shiprocket tracking timeline](docs/images/planned-order-tracking.png) |
-
-| Admin dashboard | Admin orders |
-|---|---|
-| ![Orders, revenue, low stock and hot products](docs/images/planned-admin-dashboard.png) | ![Orders with payment and shipment status](docs/images/planned-admin-orders.png) |
+![Admin dashboard with orders, revenue, low stock and hot products](docs/images/planned-admin-dashboard.png)
 
 ## License
 
