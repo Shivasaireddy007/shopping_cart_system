@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.schemas.search import SearchParams
 from app.services.search import index
 from app.services.search.query import build_query
-from tests.conftest import ADDRESS, Factory, FakeSearch, auth_header
+from tests.conftest import Factory, FakeSearch
 
 
 def test_facet_selections_go_to_post_filter_not_the_main_query() -> None:
@@ -89,29 +89,26 @@ async def test_search_validates_parameters(client: AsyncClient) -> None:
     assert (await client.get("/api/v1/search", params={"per_page": 100})).status_code == 422
 
 
-async def test_admin_changes_are_indexed(client: AsyncClient, factory: Factory, search: FakeSearch) -> None:
-    admin = await factory.user(is_admin=True)
-    product = await factory.product()
+async def test_product_changes_are_indexed_by_the_search_consumer(
+    factory: Factory, search: FakeSearch, session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from app.events import handlers
 
-    await client.patch(
-        f"/api/v1/admin/products/{product.id}", json={"name": "Trail Runner"}, headers=auth_header(admin)
-    )
-    await client.delete(f"/api/v1/admin/products/{product.id}", headers=auth_header(admin))
+    monkeypatch.setattr(handlers, "get_search_client", lambda: search.client)
+    index_product = handlers.index_product
 
-    indexed, archived = search.bulk_bodies()
-    assert indexed[0] == {"index": {"_index": "products", "_id": str(product.id)}}
+    active = await factory.product(name="Trail Runner")
+    archived = await factory.product(is_active=False)
+
+    for product_id in (active.id, archived.id):
+        await index_product(
+            session, {"event_id": "x", "type": "product.changed", "data": {"product_id": product_id}}
+        )
+
+    indexed, removed = search.bulk_bodies()
+    assert indexed[0] == {"index": {"_index": "products", "_id": str(active.id)}}
     assert indexed[1]["name"] == "Trail Runner"
-    assert archived == [{"delete": {"_index": "products", "_id": str(product.id)}}]
-
-
-async def test_checkout_reindexes_stock(client: AsyncClient, factory: Factory, search: FakeSearch) -> None:
-    user = await factory.user()
-    product = await factory.product(stock=1)
-    await factory.cart_with(user, (product, 1))
-
-    await client.post("/api/v1/checkout", json={"shipping_address": ADDRESS}, headers=auth_header(user))
-
-    assert search.bulk_bodies()[-1][1]["in_stock"] is False
+    assert removed == [{"delete": {"_index": "products", "_id": str(archived.id)}}]
 
 
 async def test_rebuild_fills_a_new_index_and_swaps_the_alias(

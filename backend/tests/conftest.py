@@ -26,6 +26,7 @@ from app.services import product_changes
 from app.services.cache import CatalogCache
 from app.services.razorpay import RazorpayClient, get_razorpay
 from app.services.search.client import SearchClient, get_search_client
+from app.services.shiprocket import ShiprocketClient, get_shiprocket
 
 _PASSWORD_HASH = hash_password("password123")
 
@@ -125,6 +126,54 @@ class FakeSearch:
         return [body for method, path, body in self.requests if path == "/_bulk"]
 
 
+class FakeShiprocket:
+    """Shiprocket's API on an in-memory transport. `awb_failures` makes the next AWB calls fail."""
+
+    def __init__(self, configured: bool = True) -> None:
+        self.calls: list[tuple[str, str, Any]] = []
+        self.awb_failures = 0
+        settings = get_settings().model_copy(
+            update={
+                "shiprocket_email": "ops@example.com" if configured else "",
+                "shiprocket_password": "secret" if configured else "",
+                "shiprocket_webhook_token": "ship-token",
+            }
+        )
+        self.client = ShiprocketClient(settings, get_redis(), transport=httpx.MockTransport(self._handle))
+
+    def _handle(self, request: httpx.Request) -> httpx.Response:
+        body = json.loads(request.content) if request.content else None
+        path = request.url.path.removeprefix("/v1/external")
+        self.calls.append((request.method, path, body))
+        if path == "/auth/login":
+            return httpx.Response(200, json={"token": "sr-token"})
+        if path == "/orders/create/adhoc":
+            return httpx.Response(200, json={"order_id": 5001, "shipment_id": 9001, "status": "NEW"})
+        if path == "/courier/assign/awb":
+            if self.awb_failures:
+                self.awb_failures -= 1
+                return httpx.Response(500, json={"message": "Courier unavailable"})
+            return httpx.Response(
+                200, json={"response": {"data": {"awb_code": "AWB123", "courier_name": "Delhivery"}}}
+            )
+        if path.startswith("/courier/track/awb/"):
+            return httpx.Response(200, json={"tracking_data": {
+                "track_url": "https://shiprocket.co/tracking/AWB123",
+                "shipment_track_activities": [
+                    {"date": "2026-10-11 09:40:00", "activity": "In transit", "location": "Bengaluru hub"},
+                ],
+            }})  # fmt: skip
+        return httpx.Response(404)
+
+    def paths(self) -> list[str]:
+        return [path for _, path, _ in self.calls]
+
+
+@pytest.fixture
+def shiprocket() -> FakeShiprocket:
+    return FakeShiprocket()
+
+
 @pytest.fixture
 def search() -> FakeSearch:
     return FakeSearch()
@@ -140,16 +189,21 @@ async def cache() -> AsyncIterator[CatalogCache]:
 
 @pytest.fixture
 async def client(
-    session: AsyncSession, razorpay: FakeRazorpay, search: FakeSearch, cache: CatalogCache
+    session: AsyncSession,
+    razorpay: FakeRazorpay,
+    search: FakeSearch,
+    cache: CatalogCache,
+    shiprocket: FakeShiprocket,
 ) -> AsyncIterator[AsyncClient]:
     async def override() -> AsyncIterator[AsyncSession]:
         yield session
-        await product_changes.publish(session, cache, search.client)
+        await product_changes.publish(session, cache)
 
     app.dependency_overrides[get_session] = override
     app.dependency_overrides[get_razorpay] = lambda: razorpay.client
     app.dependency_overrides[get_search_client] = lambda: search.client
     app.dependency_overrides[get_catalog_cache] = lambda: cache
+    app.dependency_overrides[get_shiprocket] = lambda: shiprocket.client
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as http:
         yield http
     app.dependency_overrides.clear()
