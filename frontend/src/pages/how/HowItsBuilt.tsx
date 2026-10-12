@@ -208,7 +208,7 @@ export function HowItsBuilt() {
         </ul>
       </Section>
 
-      <Section id="ci-title" title="Checked on every push" intro="Six CI jobs must pass before anything merges.">
+      <Section id="ci-title" title="Checked on every push" intro="Six CI jobs run on every push to the repository.">
         <ol className="grid gap-2 text-sm">
           {CI_JOBS.map((job, i) => (
             <li key={job} className="flex gap-3">
