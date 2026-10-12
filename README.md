@@ -179,7 +179,7 @@ Measured with k6 on a 100,000-product catalog at a fixed 1,000 requests per seco
 - **Short-lived tokens.** Access tokens last 15 minutes; the frontend swaps the refresh token for a new
   pair on a 401, and concurrent requests share a single refresh.
 - **Fast, isolated tests.** Each backend test runs in a transaction that is rolled back afterwards, with
-  the app's own commits turned into savepoints; the suite runs in under a second.
+  the app's own commits turned into savepoints; the whole suite runs in about a second.
 
 ## API
 
