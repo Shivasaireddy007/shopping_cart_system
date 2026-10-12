@@ -6,7 +6,8 @@ A full-stack e-commerce app: a **React + TypeScript** storefront and admin panel
 **FastAPI** backend with **PostgreSQL**: Razorpay payments, Shiprocket shipping driven by **Kafka**
 events through a transactional outbox, OpenSearch faceted search and Redis caching. Prices are in rupees.
 
-**Live demo: [shopping-cart-uc56.onrender.com](https://shopping-cart-uc56.onrender.com)**. Sign in as
+**[Live demo](https://shopping-cart-uc56.onrender.com/how-it-works)**: run ten simultaneous checkouts for
+three units and watch it refuse to oversell, then [open the shop](https://shopping-cart-uc56.onrender.com). Sign in as
 `demo@example.com` or `admin@example.com` (password `demo-password`), or create an account.
 It runs on a free plan: the first visit after a quiet spell takes about a minute to wake up,
 payments are simulated, and Kafka, OpenSearch and shipping run only in the full
@@ -49,7 +50,7 @@ The project is built in stages. Each stage is complete and tested before the nex
 | 3 | Redis caching for hot products, OpenSearch faceted search | ✅ Done |
 | 4 | Kafka order events with the transactional outbox pattern, Shiprocket shipping | ✅ Done |
 | 5 | Docker, Kubernetes (Helm), Prometheus metrics and tracing, admin dashboard, k6 load tests, Playwright e2e | ✅ Done |
-| 6 | Public live demo | ✅ [Live](https://shopping-cart-uc56.onrender.com) |
+| 6 | Public live demo | ✅ [Live](https://shopping-cart-uc56.onrender.com/how-it-works) |
 
 ## Tech stack
 
