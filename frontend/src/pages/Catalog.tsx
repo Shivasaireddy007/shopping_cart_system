@@ -1,7 +1,9 @@
 import { useSearchParams } from 'react-router-dom'
 
+import { EngineeringStrip } from '../components/EngineeringStrip'
 import { ProductCard } from '../components/ProductCard'
 import { type ProductQuery, useCategories, useProducts } from '../hooks/queries'
+import { IS_DEMO } from '../lib/demo'
 
 const BRANDS = ['Adidas', 'Bata', 'Campus', 'Nike', 'Puma', 'Reebok', 'Sparx', 'Woodland']
 const PRICE_RANGES = [
@@ -51,6 +53,8 @@ export function Catalog() {
   const activeRange = PRICE_RANGES.find((r) => r.min === query.min_price && r.max === query.max_price)
 
   return (
+    <>
+    {IS_DEMO ? <EngineeringStrip /> : null}
     <div className="grid gap-6 md:grid-cols-[200px_1fr]">
       <aside className="grid content-start gap-6 text-sm" aria-label="Filters">
         <FilterGroup title="Category">
@@ -130,6 +134,7 @@ export function Catalog() {
         ) : null}
       </section>
     </div>
+    </>
   )
 }
 

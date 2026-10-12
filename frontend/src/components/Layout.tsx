@@ -3,12 +3,10 @@ import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 
 import { useCart, useMe } from '../hooks/queries'
 import { useAuth } from '../stores/auth'
+import { DEMO_NOTICE } from '../lib/demo'
 import { Logo } from './Logo'
 import { RequestInspector } from './RequestInspector'
 import { SearchBox } from './SearchBox'
-
-// Set at build time for the public demo (VITE_DEMO_NOTICE), e.g. test card details.
-const DEMO_NOTICE = import.meta.env.VITE_DEMO_NOTICE as string | undefined
 
 export function Layout() {
   const { data: me } = useMe()
