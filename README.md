@@ -1,6 +1,20 @@
 # Shopping Cart
 
-[![ci](https://github.com/Shivasaireddy007/shopping_cart_system/actions/workflows/ci.yml/badge.svg)](https://github.com/Shivasaireddy007/shopping_cart_system/actions/workflows/ci.yml)
+[![Live demo](https://img.shields.io/badge/live_demo-open-2ea44f?logo=render&logoColor=white)](https://shopping-cart-uc56.onrender.com/how-it-works)
+[![CI](https://github.com/Shivasaireddy007/shopping_cart_system/actions/workflows/ci.yml/badge.svg)](https://github.com/Shivasaireddy007/shopping_cart_system/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/Shivasaireddy007/shopping_cart_system)](https://github.com/Shivasaireddy007/shopping_cart_system/releases)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+
+![Python](https://img.shields.io/badge/Python_3.12-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
+![React](https://img.shields.io/badge/React_19-20232A?logo=react&logoColor=61DAFB)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-DC382D?logo=redis&logoColor=white)
+![Kafka](https://img.shields.io/badge/Kafka-231F20?logo=apachekafka&logoColor=white)
+![OpenSearch](https://img.shields.io/badge/OpenSearch-005EB8?logo=opensearch&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)
+![Kubernetes](https://img.shields.io/badge/Kubernetes-326CE5?logo=kubernetes&logoColor=white)
 
 A full-stack e-commerce app: a **React + TypeScript** storefront and admin panel on a
 **FastAPI** backend with **PostgreSQL**: Razorpay payments, Shiprocket shipping driven by **Kafka**
@@ -12,6 +26,13 @@ three units and watch it refuse to oversell, then [open the shop](https://shoppi
 It runs on a free plan: the first visit after a quiet spell takes about a minute to wake up,
 payments are simulated, and Kafka, OpenSearch and shipping run only in the full
 [Docker and Kubernetes setup](#running-locally).
+
+![Ten buyers, three units: the naive code oversells, the real checkout sells exactly three](docs/media/oversell.gif)
+
+[![Watch the 75-second walkthrough](docs/media/walkthrough-poster.png)](docs/media/walkthrough.mp4)
+
+**[▶ Watch the 75-second walkthrough](docs/media/walkthrough.mp4)**, recorded on the live demo: the oversell
+experiment, live server stats, search, a purchase with payment, and the admin panel.
 
 ![Search for "runing shoes" (typo) with the Nike facet ticked; other brands keep their counts](docs/images/search.png)
 
